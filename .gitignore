@@ -112,3 +112,6 @@ ENV/
 
 #Openpose
 openpose/*
+
+#Reduced label text file
+resource/kinetics_skeleton/label_name_reduced.txt
