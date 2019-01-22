@@ -7,6 +7,9 @@ import os
 import argparse
 
 class extract_relevant_classes():
+        '''
+                This class is only relevant if the user has downloaded the 'original' dataset from ST-GCN
+        '''
 
         def __init__(self, 
                         classes,
@@ -79,7 +82,7 @@ class extract_relevant_classes():
 
 if __name__ == '__main__':
         parser = argparse.ArgumentParser(
-                description='This is a program in which one can specify class names which to extract, such that the model can be trained on these rather than the entire data set')
+                description='This is a program in which one can specify class names which to extract, such that the model can be trained on these rather than the entire data set. NOTE: This is only relevant if the user has downloaded the "original" dataset from ST-GCN')
 
         parser.add_argument('-C', '--classes', nargs='+', help='List of class names')
 
