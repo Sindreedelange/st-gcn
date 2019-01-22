@@ -10,7 +10,7 @@ class extract_relevant_classes():
 
         def __init__(self, 
                         classes,
-                        data_folder_path = "st-gcn/data/Kinetics/kinetics-skeleton",
+                        data_folder_path = "data/Kinetics/kinetics-skeleton",
                         output_dict_name = "kinetics_label_reduced.json"):
                 '''
                         classes: List - containing names of the desired classes 

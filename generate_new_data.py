@@ -1,13 +1,13 @@
-from tools.utils.youtube_util import youtube_util as yt_util
-from tools.utils.openpose_util import openpose_util as op_util
+from tools.utils.youtube import youtube as yt_util
+from tools.utils.openpose import openpose as op_util
 from tools.utils.video import flip_movies
 import argparse
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Program in which a user can specify the path to a .csv file, download them, and 'clean them up' for use with st-gcn")
 
-    parser.add_argument('-p', '--csv_path', help='Path to .csv file', default = "st-gcn/data/youtube/download_videos.csv")
-    parser.add_argument('-d', '--data_path', help='Path to data', default = "st-gcn/data")
+    parser.add_argument('-p', '--csv_path', help='Path to .csv file', default = "data/youtube/download_videos.csv")
+    parser.add_argument('-d', '--data_path', help='Path to data', default = "data")
     parser.add_argument('-a', '--augment', help='To augment the inputed videos, or not', default = 'True')
     args = parser.parse_args()
 

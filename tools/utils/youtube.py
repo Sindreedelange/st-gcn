@@ -11,7 +11,7 @@ from .file_util import *
 from views.output_messages import *
 
 
-class youtube_util():
+class youtube():
     '''
         Util class to be used for downloading and 'cleaning' Youtube videos, and updating necessary files there after (num classes, class names) 
     '''

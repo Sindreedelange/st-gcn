@@ -74,9 +74,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Kinetics-skeleton Data Converter.')
     parser.add_argument(
-        '--data_path', default='st-gcn/data/Kinetics/kinetics-skeleton/')
+        '--data_path', default='data/Kinetics/kinetics-skeleton/')
     parser.add_argument(
-        '--out_folder', default='st-gcn/data/Kinetics/kinetics-skeleton/')
+        '--out_folder', default='data/Kinetics/kinetics-skeleton/')
     arg = parser.parse_args()
 
     part = ['train', 'val']

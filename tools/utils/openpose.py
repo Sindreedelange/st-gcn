@@ -13,7 +13,7 @@ import psutil
 from .file_util import *
 # from views.output_messages import *
 
-class openpose_util():
+class openpose():
 
     def __init__ (self,  
                     data_path,
