@@ -22,7 +22,7 @@ def update_num_classes_yaml(train_demo = ['train', 'demo']):
         counter += 1
         
     for f in train_demo:
-        yaml_f_path = "st-gcn/config/st_gcn/kinetics-skeleton/{}.yaml".format(f)
+        yaml_f_path = "config/st_gcn/kinetics-skeleton/{}.yaml".format(f)
         print("Updating '{}' num classes".format(yaml_f_path))
 
         with open(yaml_f_path) as f:
@@ -47,7 +47,7 @@ def check_duplicates(folder_path, file_name):
     file_list = os.listdir(folder_path)
     return file_name in file_list
 
-def update_label_list(label, text_path="st-gcn/resource/kinetics_skeleton/label_name_reduced.txt"):
+def update_label_list(label, text_path="resource/kinetics_skeleton/label_name_reduced.txt"):
     '''
         Check if any of the new labels need to be put in the label list
 
@@ -59,13 +59,10 @@ def update_label_list(label, text_path="st-gcn/resource/kinetics_skeleton/label_
 
         return: label index of the class
     '''
-
-    # TODO: Find a better way to do this - make a new file if it does not exists
     try:
         label_text_file = open(text_path, 'r+')
     except Exception as e:
-        open_file_error_message(e, text_path)
-        sys.exit(1)
+        label_text_file = open(text_path, 'w+')
 
     label_exsists = False
 
@@ -74,7 +71,6 @@ def update_label_list(label, text_path="st-gcn/resource/kinetics_skeleton/label_
 
     # Check if the class label already exists
     for line in label_text_file:
-            
         if compare_strings(line, label):
             label_exsists = True
             break
@@ -90,8 +86,8 @@ def update_label_list(label, text_path="st-gcn/resource/kinetics_skeleton/label_
     return counter
 
 def verify_new_classes(class_list, 
-                        original_label_text_file = "st-gcn/resource/kinetics_skeleton/label_name.txt", 
-                        new_label_text_file = "st-gcn/resource/kinetics_skeleton/label_name_reduced.txt"):
+                        original_label_text_file = "resource/kinetics_skeleton/label_name.txt", 
+                        new_label_text_file = "resource/kinetics_skeleton/label_name_reduced.txt"):
     '''
         When trying to extract specific classes from original dataset, verify that they are actually valid class names, and that they do not already exist in the data set
 
@@ -135,7 +131,7 @@ def verify_new_classes(class_list,
     
     return verified_class_list
 
-def get_label_text_file(path="st-gcn/resource/kinetics_skeleton/label_name_reduced.txt"):
+def get_label_text_file(path="resource/kinetics_skeleton/label_name_reduced.txt"):
     '''
         Returns the text file containing the class names of the reduced data set, used to train the model on
     '''
