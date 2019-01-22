@@ -7,6 +7,10 @@ import argparse
 import numpy as np
 from numpy.lib.format import open_memmap
 
+import subprocess
+
+from utils.file_util import *
+
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
 from feeder.feeder_kinetics import Feeder_kinetics
@@ -70,18 +74,24 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Kinetics-skeleton Data Converter.')
     parser.add_argument(
-        '--data_path', default='data/Kinetics/kinetics-skeleton')
+        '--data_path', default='st-gcn/data/Kinetics/kinetics-skeleton/')
     parser.add_argument(
-        '--out_folder', default='data/Kinetics/kinetics-skeleton')
+        '--out_folder', default='st-gcn/data/Kinetics/kinetics-skeleton/')
     arg = parser.parse_args()
 
     part = ['train', 'val']
     for p in part:
-        data_path = '{}/kinetics_{}'.format(arg.data_path, p)
-        label_path = '{}/kinetics_{}_label.json'.format(arg.data_path, p)
-        data_out_path = '{}/{}_data.npy'.format(arg.out_folder, p)
-        label_out_path = '{}/{}_label.pkl'.format(arg.out_folder, p)
+        # Path to skeleton files folder
+        data_path = '{}/kinetics_{}_reduced'.format(arg.data_path, p)
+        # Path to json files
+        label_path = '{}/kinetics_label_reduced_{}.json'.format(arg.data_path, p)
+        # Files to generate
+        data_out_path = '{}/{}_data_reduced.npy'.format(arg.out_folder, p)
+        label_out_path = '{}/{}_label_reduced.pkl'.format(arg.out_folder, p)
 
         if not os.path.exists(arg.out_folder):
             os.makedirs(arg.out_folder)
+
         gendata(data_path, label_path, data_out_path, label_out_path)
+        print("Updating number of classes")
+        update_num_classes_yaml()
