@@ -1,8 +1,13 @@
 import skvideo.io
 import numpy as np
 import cv2
-
-import tools
+import os
+import sys
+import torch
+from torchvision import transforms, utils
+import torchvision.transforms as transforms
+import subprocess
+from PIL import Image
 
 def video_info_parsing(video_info, num_person_in=5, num_person_out=2):
     data_numpy = np.zeros((3, len(video_info['data']), 18, num_person_in))
@@ -52,3 +57,121 @@ def video_play(video_path, fps=30):
 
     cap.release()
     cv2.destroyAllWindows()
+
+
+# videos_path: /home/stian/Master_thesis/st-gcn/data/youtube/videos_clean
+def flip_movies(videos_path_input, videos_path_output, extension = ".mjpeg"):
+    '''
+        Data augmentation: Flip movies
+    
+        videos_path_input: where to find the videos to flip
+                e.g. data_augmentation_path_input="st-gcn/data/youtube/videos_clean"
+
+        videos_path_output: where to store the flipped videos
+                e.g. data_augmentation_path_output="st-gcn/data/youtube/videos_clean_augmented
+
+    '''
+    for video_name in os.listdir(videos_path_input):
+
+        # Input
+        video_name_no_ext = video_name.split(".")[0]
+        video_ext = video_name.split(".")[1]
+        video_f_path_input = os.path.join(videos_path_input, video_name)
+
+        # Convert to .mjpeg, necessary because cv2 is not able to read mp4 files, weird tho because on inspecting the files they have the same CODECs?
+        new_video_full_path = os.path.join(videos_path_input, video_name_no_ext) + extension
+        os.rename(video_f_path_input, new_video_full_path)
+
+        # Output 
+        frames_output = os.path.join(videos_path_output, "flipped_images")
+        frames_f_output = os.path.join(frames_output, video_name_no_ext)
+
+        # Want to store the flipped videos with the other videos (that is being flipped), such that it is easy when running them through openpose
+        # Necessary with "__" because of string splitting later in the program, in which we need to differentiate between the label, and the fact the file
+        # is 'flipped' 
+        video_flipped_name = "{}__{}".format(video_name_no_ext, "flipped")
+        video_flipped_f_name = "{}.{}".format(video_flipped_name, "mp4")
+        video_flipped_f_path = os.path.join(videos_path_input, video_flipped_f_name)
+
+        # Flip the movies frames, and store them in a "Flipped" folder
+        print("Flipping frames in video {} ...".format(new_video_full_path))
+        flip_frames(video_name_no_ext = video_name_no_ext, 
+                    video_f_path_input = new_video_full_path, 
+                    frames_f_path_output = frames_f_output)
+        print("Frames successfully flipped and saved. ")
+    
+        frames_to_video(input_path = frames_f_output, output_path = video_flipped_f_path, output_name = video_name_no_ext, video_ext = video_ext)
+
+def flip_frames(video_name_no_ext, video_f_path_input, frames_f_path_output):
+    '''
+        video_name: e.g. "0EDCBPPstwY-jumping_jacks"
+
+        video_f_path_input: e.g. "st-gcn/data/youtube/videos_clean/2d1rnOm9IGQ-cup_song.mjpeg"
+
+        video_f_path_output: e.g. "st-gcn/data/youtube/videos_clean/2d1rnOm9IGQ-cup_song__flipped.mjpeg"
+
+        frames_f_path_output: e.g. "st-gcn/data/youtube/videos_clean_augmented/flipped_images/2d1rnOm9IGQ-cup_song"
+    '''
+
+    # Works on this video (original .avi):
+    # video_f_path_input = "/home/stian/Master_thesis/data_augmentation/data/videos/Stian.avi"
+
+    # flipped_frames_path = "st-gcn/data/youtube/videos_clean_augmented/flipped_images"
+    print("Video name no extension: ", video_name_no_ext)
+    print("Video full input path: ", video_f_path_input)
+    print("Frames full output path: ", frames_f_path_output)
+
+    if not os.path.isfile(video_f_path_input):
+        print("This file does not exists {}, please try again \n".format(video_f_path_input))
+        return
+    else:
+        print("This file exists, so it should work \n")
+
+    if not os.path.isdir(frames_f_path_output):
+        print("Making output directory {} \n".format(frames_f_path_output))
+        os.makedirs(frames_f_path_output)
+
+
+    vid = cv2.VideoCapture(video_f_path_input)
+    success, image = vid.read()
+    count = 0
+    
+    while success:
+        # Writes the "original" frames to file, which is seemingly unnecessary
+        # cv2.imwrite(os.path.join(video_f_path_output, ('frame%d.jpg' % count)), image)
+    
+        image_flipped = cv2.flip(image, 1)
+        cv2.imwrite(os.path.join(frames_f_path_output, ('frame%d_flipped.jpg' % count)), image_flipped)
+    
+        success, image = vid.read()
+        count += 1    
+
+def frames_to_video(input_path, output_path, output_name, video_ext):
+    # output_name += "{}.{}".format("_flipped", video_ext) 
+    # print("output_full: ", output_path)
+
+    print("\n Input path: ", input_path, "\n")
+    print("\n Full output path: ", output_path, "\n")
+
+    try:
+        cmd = ("ffmpeg -framerate 30 -i " + input_path + "/frame%000d_flipped.jpg -c:v libx264 -profile:v high -crf 20 -pix_fmt yuv420p " + output_path)
+        p = subprocess.Popen(cmd, shell=True)
+
+        # Wait until process is finished
+        p.wait()
+    except:
+        print("Problems with the cmd command!")
+
+def convert_from_mp4_to_avi(input_path, output_path):
+    
+    video_ext = input_path.split(".")[1]
+    video_no_ext = input_path.split(".")[1]
+    if video_ext != "avi":  # If not .avi --> convert to .avi
+        #cmd = ("ffmpeg -i filename.mp4 -vcodec copy -acodec copy filename.avi")
+        cmd = ("ffmpeg -i " + input_path + " -vcodec copy -acodec copy " + output_path)
+        p = subprocess.Popen(cmd, shell=True)
+        p.wait()
+    os.remove(input_path)
+    new_path = video_no_ext + ".avi"
+    return new_path
+        
