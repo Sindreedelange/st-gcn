@@ -1,7 +1,3 @@
-'''
-    Author(s): Stian & Sindre
-'''
-
 import numpy as np
 import pickle
 import json
@@ -9,6 +5,8 @@ import ruamel.yaml
 import os
 
 import sys
+
+from views.output_messages import open_file_error_message
 
 def update_num_classes_yaml(train_demo = ['train', 'demo']):
     '''
@@ -66,7 +64,7 @@ def update_label_list(label, text_path="st-gcn/resource/kinetics_skeleton/label_
     try:
         label_text_file = open(text_path, 'r+')
     except Exception as e:
-        open_file_error_measse(e, text_path)
+        open_file_error_message(e, text_path)
         sys.exit(1)
 
     label_exsists = False
