@@ -19,7 +19,7 @@ class openpose():
                     data_path,
                     data_videos_clean,
                     data_videos_keypoints,
-                    label_text_file = "st-gcn/resource/kinetics_skeleton/label_name_reduced.txt",
+                    label_text_file = "resource/kinetics_skeleton/label_name_reduced.txt",
                     openpose_bin_path = "openpose/build/examples/openpose/openpose.bin", 
                     model_folder = "openpose/models/"):        
         '''
