@@ -96,7 +96,7 @@ class IO():
         # parameter priority: command line > config > default
         parser = argparse.ArgumentParser( add_help=add_help, description='IO Processor')
 
-        parser.add_argument('-w', '--work_dir', default='./work_dir/tmp', help='the work folder for storing results')
+        parser.add_argument('-w', '--work_dir', default='./work_dir', help='the work folder for storing results')
         parser.add_argument('-c', '--config', default=None, help='path to the configuration file')
 
         # processor
@@ -104,8 +104,8 @@ class IO():
         parser.add_argument('--device', type=int, default=0, nargs='+', help='the indexes of GPUs for training or testing')
 
         # visulize and debug
-        parser.add_argument('--print_log', type=str2bool, default=True, help='print logging or not')
-        parser.add_argument('--save_log', type=str2bool, default=True, help='save logging or not')
+        parser.add_argument('--print_log', type=str2bool, default=False, help='print logging or not')
+        parser.add_argument('--save_log', type=str2bool, default=False, help='save logging or not')
 
         # model
         parser.add_argument('--model', default=None, help='the model will be used')
