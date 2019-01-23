@@ -154,11 +154,11 @@ class Processor(IO):
         parser = argparse.ArgumentParser( add_help=add_help, description='Base Processor')
 
         parser.add_argument('-w', '--work_dir', default='./work_dir/tmp', help='the work folder for storing results')
-        parser.add_argument('-c', '--config', default=None, help='path to the configuration file')
+        parser.add_argument('-c', '--config', default='config/st_gcn/kinetics-skeleton/train.yaml', help='path to the configuration file')
 
         # processor
         parser.add_argument('--phase', default='train', help='must be train or test')
-        parser.add_argument('--save_result', type=str2bool, default=False, help='if ture, the output of the model will be stored')
+        parser.add_argument('--save_result', type=str2bool, default=False, help='if true, the output of the model will be stored')
         parser.add_argument('--start_epoch', type=int, default=0, help='start training from which epoch')
         parser.add_argument('--num_epoch', type=int, default=80, help='stop training in which epoch')
         parser.add_argument('--use_gpu', type=str2bool, default=True, help='use GPUs or not')
@@ -168,8 +168,8 @@ class Processor(IO):
         parser.add_argument('--log_interval', type=int, default=100, help='the interval for printing messages (#iteration)')
         parser.add_argument('--save_interval', type=int, default=10, help='the interval for storing models (#iteration)')
         parser.add_argument('--eval_interval', type=int, default=5, help='the interval for evaluating models (#iteration)')
-        parser.add_argument('--save_log', type=str2bool, default=True, help='save logging or not')
-        parser.add_argument('--print_log', type=str2bool, default=True, help='print logging or not')
+        parser.add_argument('--save_log', type=str2bool, default=False, help='save logging or not')
+        parser.add_argument('--print_log', type=str2bool, default=False, help='print logging or not')
         parser.add_argument('--pavi_log', type=str2bool, default=False, help='logging on pavi or not')
 
         # feeder
