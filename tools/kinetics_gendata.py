@@ -39,7 +39,7 @@ def gendata(
         data_out_path,
         label_out_path,
         num_person_in=5,  #observe the first 5 persons 
-        num_person_out=2,  #then choose 2 persons with the highest score 
+        num_person_out=1,  #then choose 2 persons with the highest score 
         max_frame=300):
 
     feeder = Feeder_kinetics(
