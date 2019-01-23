@@ -8,7 +8,7 @@ import numpy as np
 import os
 import subprocess
 from .file_util import *
-from views.output_messages import *
+from tools.views.output_messages import *
 
 
 class youtube():

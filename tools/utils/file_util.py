@@ -6,8 +6,6 @@ import os
 
 import sys
 
-from views.output_messages import open_file_error_message
-
 def update_num_classes_yaml(train_demo = ['train', 'demo']):
     '''
         When generating .npy and .pkl file, used for the training, verify that the number of classes in the data set corresponds to the various config files,

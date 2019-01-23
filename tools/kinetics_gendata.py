@@ -8,12 +8,13 @@ import numpy as np
 from numpy.lib.format import open_memmap
 
 import subprocess
-
+print("Sys path: {}".format(sys.path))
 from utils.file_util import *
 
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
 from feeder.feeder_kinetics import Feeder_kinetics
+
 
 toolbar_width = 30
 
