@@ -9,7 +9,7 @@ import sys
 def update_num_classes_yaml(train_demo = ['train', 'demo']):
     '''
         When generating .npy and .pkl file, used for the training, verify that the number of classes in the data set corresponds to the various config files,
-        such as 'st-gcn/config/st_gcn/kinetics-skeleton/train.yaml'
+        such as 'config/train.yaml'
     '''
     yaml = ruamel.yaml.YAML()
 
@@ -20,7 +20,7 @@ def update_num_classes_yaml(train_demo = ['train', 'demo']):
         counter += 1
         
     for f in train_demo:
-        yaml_f_path = "config/st_gcn/kinetics-skeleton/{}.yaml".format(f)
+        yaml_f_path = "config/{}.yaml".format(f)
         print("Updating '{}' num classes".format(yaml_f_path))
 
         with open(yaml_f_path) as f:
@@ -135,7 +135,7 @@ def get_label_text_file(path="resource/kinetics_skeleton/label_name_reduced.txt"
     '''
     return open(path, 'r+')
 
-def update_yaml(file_path='st-gcn/config/st_gcn/kinetics-skeleton/train.yaml'):
+def update_yaml(file_path='st-gcn/train.yaml'):
     '''
         ######################
         Potentially unecessary --> Updating the file when generating the .npy and .pkl files instead

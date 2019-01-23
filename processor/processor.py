@@ -165,7 +165,7 @@ class Processor(IO):
         parser = argparse.ArgumentParser( add_help=add_help, description='Base Processor')
 
         parser.add_argument('-w', '--work_dir', default='./work_dir', help='the work folder for storing results')
-        parser.add_argument('-c', '--config', default='config/st_gcn/kinetics-skeleton/train.yaml', help='path to the configuration file')
+        parser.add_argument('-c', '--config', default='config/train.yaml', help='path to the configuration file')
 
         # processor
         parser.add_argument('--phase', default='train', help='must be train or test')

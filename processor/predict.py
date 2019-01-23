@@ -180,7 +180,7 @@ class Predict(IO):
             default=1080,
             type=int,
             help='Path to save results')
-        parser.set_defaults(config='config/st_gcn/kinetics-skeleton/demo.yaml')
+        parser.set_defaults(config='config/demo.yaml')
         parser.set_defaults(print_log=False)
         # endregion yapf: enable
 
