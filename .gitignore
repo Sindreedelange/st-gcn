@@ -123,3 +123,6 @@ charts/
 
 #Test folder
 data_foo/*
+
+#Test video for new class
+resource/media/jumping_jacks.mp4
