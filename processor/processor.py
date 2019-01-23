@@ -4,6 +4,7 @@ import sys
 import argparse
 import yaml
 import numpy as np
+import os
 
 # torch
 import torch
@@ -132,6 +133,9 @@ class Processor(IO):
                     self.io.print_log('Eval epoch: {}'.format(epoch))
                     self.test()
                     self.io.print_log('Done.')
+            
+            print("Epoch {}/{}".format(self.meta_info['epoch'] + 1, self.arg.num_epoch))
+            print("Training done - model saved at {}".format(os.path.join(self.arg.work_dir.split("/")[1], filename)))
         # test phase
         elif self.arg.phase == 'test':
 
@@ -160,7 +164,7 @@ class Processor(IO):
         # parameter priority: command line > config > default
         parser = argparse.ArgumentParser( add_help=add_help, description='Base Processor')
 
-        parser.add_argument('-w', '--work_dir', default='./work_dir/tmp', help='the work folder for storing results')
+        parser.add_argument('-w', '--work_dir', default='./work_dir', help='the work folder for storing results')
         parser.add_argument('-c', '--config', default='config/st_gcn/kinetics-skeleton/train.yaml', help='path to the configuration file')
 
         # processor
