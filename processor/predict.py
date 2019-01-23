@@ -37,6 +37,8 @@ class Predict(IO):
         with open(label_name_path) as f:
             label_name = f.readlines()
             label_name = [line.rstrip() for line in label_name]
+
+        print("\nPredicting on: {} \nUsing model: {}".format(video_name, self.arg.weights))
         
         # pose estimation - Running openpose on inputed file
         openpose_args = dict(
@@ -45,18 +47,22 @@ class Predict(IO):
             display=0,
             render_pose=0, 
             model_pose='COCO')
-        command_line = openpose_bin_path + ' '
-        command_line += ' '.join(['--{} {}'.format(k, v) for k, v in openpose_args.items()])
+        cmd = openpose_bin_path + ' '
+        cmd += ' '.join(['--{} {}'.format(k, v) for k, v in openpose_args.items()])
+        # Delete potential old prediction folders
         shutil.rmtree(output_snippets_dir, ignore_errors=True)
+        # Make output folder (basically the one that was just deleted)
         verify_directory(output_snippets_dir)
-        os.system(command_line)
+        p = subprocess.Popen(cmd, shell=True)
+        # os.system(command_line)
 
+        p.wait()
         # pack openpose ouputs - Get the video frames from the 'openposed video', which are to ran through the network (predicted on)
         video = video_util.get_video_frames(self.arg.video)
+
         height, width, _ = video[0].shape
         video_info = openpose.json_pack(
             output_snippets_dir, video_name, width, height)
-
         verify_directory(output_sequence_dir)
         with open(output_sequence_path, 'w') as outfile:
             json.dump(video_info, outfile)
