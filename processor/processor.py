@@ -18,6 +18,8 @@ from torchlight import import_class
 
 from .io import IO
 
+from tools.views.output_messages import print_generic_message
+
 class Processor(IO):
     """
         Base Processor
@@ -68,6 +70,8 @@ class Processor(IO):
     def show_epoch_info(self):
         for k, v in self.epoch_info.items():
             self.io.print_log('\t{}: {}'.format(k, v))
+            # Print the progress - number of epochs done / total number of epochs
+            print("Epoch {}/{}".format(self.meta_info['epoch'] + 1, self.arg.num_epoch), end='\r')
         if self.arg.pavi_log:
             self.io.log('train', self.meta_info['iter'], self.epoch_info)
 
@@ -105,6 +109,9 @@ class Processor(IO):
 
         # training phase
         if self.arg.phase == 'train':
+            message = "Training started"
+            print_generic_message(message)
+
             for epoch in range(self.arg.start_epoch, self.arg.num_epoch):
                 self.meta_info['epoch'] = epoch
 

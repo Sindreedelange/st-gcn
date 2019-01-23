@@ -39,13 +39,10 @@ class REC_Processor(Processor):
         Processor for Skeleton-based Action Recgnition
     """
 
-    message = "Training started"
-    print_generic_message(message)
-
     def load_model(self):
         message = "Loading model"
         print_generic_message(message)
-        
+
         self.model = self.io.load_model(self.arg.model,
                                         **(self.arg.model_args))
         self.model.apply(weights_init)
