@@ -111,7 +111,7 @@ ENV/
 .mypy_cache/
 
 #Openpose
-openpose/*
+openpose/*mo
 
 #Reduced label text file - will be made during run
 resource/kinetics_skeleton/label_name_reduced.txt
@@ -121,9 +121,3 @@ resource/kinetics_skeleton/label_name_reduced.txt
 
 #Test folder
 data_foo/*
-
-#Number of classes updated during testing 
-config/st_gcn/kinetics-skeleton/*
-
-#Main method for generating new data - will be edited during testing
-generating_new_data.py
