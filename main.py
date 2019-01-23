@@ -13,7 +13,7 @@ if __name__ == '__main__':
     # region register processor yapf: disable
     processors = dict()
     processors['training'] = import_class('processor.training.REC_Processor')
-    processors['demo'] = import_class('processor.demo.Demo')
+    processors['predict'] = import_class('processor.predict.Predict')
     #endregion yapf: enable
 
     # add sub-parser

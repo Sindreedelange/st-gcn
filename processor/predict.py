@@ -20,7 +20,7 @@ from tools.utils.openpose import openpose
 from tools.utils import video as video_util
 
 
-class Demo(IO):
+class Predict(IO):
     """
         Demo for Skeleton-based Action Recgnition
     """
@@ -162,7 +162,7 @@ class Demo(IO):
 
         # region arguments yapf: disable
         parser.add_argument('--video',
-            default='resource/media/skateboarding.mp4',
+            default='resource/media/jumping_jacks.mp4',
             help='Path to video')
         parser.add_argument('--openpose',
             default='openpose/build',
