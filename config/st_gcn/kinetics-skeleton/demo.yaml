@@ -1,5 +1,4 @@
-weights: ./models/kinetics-st_gcn.pt
-
+weights: ./work_dir/epoch60_model.pt
 # model
 model: net.st_gcn.Model
 model_args:

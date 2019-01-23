@@ -1,4 +1,4 @@
-work_dir: ./work_dir/recognition/kinetics_skeleton/ST_GCN
+work_dir: ./work_dir/epoch60_model.pt
 
 # feeder
 feeder: feeder.feeder.Feeder
@@ -23,9 +23,9 @@ model_args:
     strategy: 'spatial'
 
 # training
-device: [0,1,2,3]
-batch_size: 256 
-test_batch_size: 256
+device: [0]
+batch_size: 32 
+test_batch_size: 32
 
 #optim
 base_lr: 0.1

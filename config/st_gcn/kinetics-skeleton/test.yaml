@@ -1,4 +1,4 @@
-weights: ./models/kinetics-st_gcn.pt
+weights: ./work_dir/epoch60_model.pt
 
 # feeder
 feeder: feeder.feeder.Feeder
