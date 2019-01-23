@@ -116,6 +116,8 @@ openpose/*mo
 #Reduced label text file - will be made during run
 resource/kinetics_skeleton/label_name_reduced.txt
 
+#Chart folder for top 5 predicted classes when running demo
+charts/
 
 # Testing
 
