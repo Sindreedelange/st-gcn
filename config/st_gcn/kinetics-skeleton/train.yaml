@@ -1,4 +1,4 @@
-work_dir: ./work_dir/epoch60_model.pt
+work_dir: ./work_dir
 
 # feeder
 feeder: feeder.feeder.Feeder
