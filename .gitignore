@@ -115,3 +115,6 @@ openpose/*
 
 #Reduced label text file
 resource/kinetics_skeleton/label_name_reduced.txt
+
+#Test folder
+data_foo/*
