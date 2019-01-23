@@ -32,14 +32,14 @@ class Feeder_kinetics(torch.utils.data.Dataset):
     def __init__(self,
                  data_path,
                  label_path,
-                 ignore_empty_sample=True,
+                 ignore_empty_sample=False,
                  random_choose=False,
                  random_shift=False,
                  random_move=False,
                  window_size=-1,
                  pose_matching=False,
                  num_person_in=5,
-                 num_person_out=2,
+                 num_person_out=1,
                  debug=False):
         self.debug = debug
         self.data_path = data_path
