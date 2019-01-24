@@ -1,7 +1,6 @@
 from tools.utils.relevant_classes import relevant_classes
 from tools.utils.file_util import *
-from tools.utils.youtube_util import youtube_util
-from views.output_messages import *
+from tools.views.output_messages import *
 
 import os
 import argparse
@@ -27,10 +26,10 @@ class extract_relevant_classes():
                 self.data_folder_path = data_folder_path
 
                 # Divide the data between train and validation data
-                dict_output_pre_name, dict_output_file_ext = output_dict_name.split(".")
+                dict_output_pre_ext, dict_output_file_ext = output_dict_name.split(".")
 
-                self.output_dict_name_train = '{}_{}.{}'.format(dict_output_pre_name, 'train', dict_output_file_ext)
-                self.output_dict_name_val = '{}_{}.{}'.format(dict_output_pre_name, 'val', dict_output_file_ext)
+                self.output_dict_name_train = '{}_{}.{}'.format(dict_output_pre_ext, 'train', dict_output_file_ext)
+                self.output_dict_name_val = '{}_{}.{}'.format(dict_output_pre_ext, 'val', dict_output_file_ext)
 
         def fill_label_index_dict(self, label_dict):
                 '''
@@ -66,10 +65,10 @@ class extract_relevant_classes():
                                                                                                 train_val = 'val')
 
                 # Move the relevant skeleton files from the training folder 
-                relevant_classes.move_relevant_files(dict_ = relevant_classes_dict_train, train_val = 'train', data_path = self.data_folder_path)
+                relevant_classes.copy_relevant_files(dict_ = relevant_classes_dict_train, train_val = 'train', data_path = self.data_folder_path)
 
                 # Move the relevant skeleton files from the validation folder
-                relevant_classes.move_relevant_files(dict_ = relevant_classes_dict_val, train_val = 'val', data_path = self.data_folder_path)
+                relevant_classes.copy_relevant_files(dict_ = relevant_classes_dict_val, train_val = 'val', data_path = self.data_folder_path)
 
                 # Path to the folder in which to move the relevant skeleton files
                 output_dict_train_f_path = os.path.join(self.data_folder_path, self.output_dict_name_train)
