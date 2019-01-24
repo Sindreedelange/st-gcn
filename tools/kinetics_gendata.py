@@ -8,8 +8,7 @@ import numpy as np
 from numpy.lib.format import open_memmap
 
 import subprocess
-print("Sys path: {}".format(sys.path))
-from utils.file_util import *
+from tools.utils.file_util import verify_directory, update_num_classes_yaml
 
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
@@ -83,16 +82,15 @@ if __name__ == '__main__':
     part = ['train', 'val']
     for p in part:
         # Path to skeleton files folder
-        data_path = '{}/kinetics_{}_reduced'.format(arg.data_path, p)
+        data_path = '{}/kinetics_{}'.format(arg.data_path, p)
         # Path to json files
-        label_path = '{}/kinetics_label_reduced_{}.json'.format(arg.data_path, p)
+        label_path = '{}/kinetics_{}_label.json'.format(arg.data_path, p)
         # Files to generate
-        data_out_path = '{}/{}_data_reduced.npy'.format(arg.out_folder, p)
-        label_out_path = '{}/{}_label_reduced.pkl'.format(arg.out_folder, p)
+        data_out_path = '{}/{}_data.npy'.format(arg.out_folder, p)
+        label_out_path = '{}/{}_label.pkl'.format(arg.out_folder, p)
 
-        if not os.path.exists(arg.out_folder):
-            os.makedirs(arg.out_folder)
+        verify_directory(arg.out_folder)
 
         gendata(data_path, label_path, data_out_path, label_out_path)
-        print("Updating number of classes")
+        print("\nUpdating number of classes \n")
         update_num_classes_yaml()
