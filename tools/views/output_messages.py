@@ -1,7 +1,7 @@
 def print_generic_message(message):
     print("\n ------------------------- \n", message, "\n ------------------------- \n")
 
-def moving_files_message(input_folder, output_folder):
+def copy_files_message(input_folder, output_folder):
     print("Moving skeleton files from: {}, to {} \n".format(input_folder, output_folder))
 
 def start_extracting_relevant_classes_message():
@@ -25,7 +25,7 @@ def open_file_error_message(exception, text_path):
     print("Error message: {} \n".format(exception))
     print("Unable to open {}, because file does not exists (or you might not have access?) \n Exiting program \n".format(text_path))
 
-def moving_files_progress_message(n, total):
+def copy_files_progress_message(n, total):
     '''
         Inform the user about the progress made of the files that are being moved.
         Works kind of like a text based progress bar

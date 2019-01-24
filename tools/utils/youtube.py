@@ -108,7 +108,7 @@ class youtube():
         '''
         
         # '-f' determines the format of the video (= mp4), '-o' determines the output folder (and the files' name)
-        cmd = ("youtube-dl -f mp4 " + url + " -o " + video_download_f_path + ' --no-continue')
+        cmd = ("youtube-dl -f mp4 " + url + " -o " + video_download_f_path)
         p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         # Wait until process is finished

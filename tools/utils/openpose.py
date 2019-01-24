@@ -310,7 +310,6 @@ class openpose():
             #dict2file(dest_path, stgcn_data)
             # Store the skeleton file
             with open(dest_path, 'w') as outfile:
-                print("Dumping the file: {}".format(dest_path))
                 json.dump(stgcn_data, outfile, indent=4)
 
             # dict2file(label_dest_path_filename, old_dictionary)

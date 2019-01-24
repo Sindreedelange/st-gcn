@@ -1,12 +1,12 @@
 from .file_util import *
 import os
 import shutil
-from views.output_messages import *
+from tools.views.output_messages import copy_files_message, copy_files_progress_message
 
 class relevant_classes():
 
     @staticmethod
-    def get_relevant_classes_dict(class_list, label_index_dict, input_path, train_val = "train", relevant_classes_dict=None):
+    def get_relevant_classes_dict(class_list, label_index_dict, input_path, train_val, relevant_classes_dict=None):
         '''
             Based on provided list of classes, extract the relevant dictionary entries, where the 'label' key == one of the classes in the class list
             Furthermore, updated its label_index, such that it corresponds to its line number in 'label_name_reduced.txt'
@@ -32,25 +32,20 @@ class relevant_classes():
         else:
             return_dict = file2dict(relevant_classes_dict)
 
-        # TODO: Remove - only for testing purposes - limit number of files from original dataset
-        counter = 0
         
         for (outer_key, outer_value) in dict_extract.items():
             # Finner de elemente med 'label' == klassene i class_list
             label = outer_value['label']
-            if(label in class_list and counter < 25):
-                print("Found file: {}".format(outer_key))
-                label_index = label_index_dict.get(label)
-                # Lager en ny dictionary med disse elementene
-                return_dict[outer_key] = outer_value
-                return_dict[outer_key]['label_index'] = label_index
-                counter += 1
+            label_index = label_index_dict.get(label)
+            # Lager en ny dictionary med disse elementene
+            return_dict[outer_key] = outer_value
+            return_dict[outer_key]['label_index'] = label_index
 
         # Returnerer nye dictionary
         return return_dict
 
     @staticmethod
-    def move_relevant_files(dict_, train_val='train', data_path = 'st-gcn/data/Kinetics/kinetics-skeleton'):
+    def copy_relevant_files(dict_, train_val, data_path):
         '''
             Moving files from:
                 'kinetics_train/'
@@ -67,7 +62,7 @@ class relevant_classes():
         new_folder_f_path = os.path.join(data_path, new_folder)
 
         # Inform user that the program is now moving files
-        moving_files_message(input_folder = old_folder, output_folder = new_folder)
+        copy_files_message(input_folder = old_folder, output_folder = new_folder)
 
         counter = 0
         total_num_files = len(os.listdir(old_folder_f_path))
@@ -79,7 +74,7 @@ class relevant_classes():
         for (outer_key, outer_value) in dict_.items():
 
             # Print progress
-            moving_files_progress_message(counter, total_num_files)
+            copy_files_progress_message(counter, total_num_files)
 
             # Each skeletonfile has extension .json, so necessary in order to compare the strings
             outer_key_f_name = outer_key + ".json"
