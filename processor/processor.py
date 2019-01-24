@@ -71,8 +71,6 @@ class Processor(IO):
     def show_epoch_info(self):
         for k, v in self.epoch_info.items():
             self.io.print_log('\t{}: {}'.format(k, v))
-            # Print the progress - number of epochs done / total number of epochs
-            print("Epoch {}/{}".format(self.meta_info['epoch'] + 1, self.arg.num_epoch), end='\r')
         if self.arg.pavi_log:
             self.io.log('train', self.meta_info['iter'], self.epoch_info)
 
@@ -115,7 +113,9 @@ class Processor(IO):
 
             for epoch in range(self.arg.start_epoch, self.arg.num_epoch):
                 self.meta_info['epoch'] = epoch
-
+                
+                # Print the progress - number of epochs done / total number of epochs
+                print("Epoch {}/{}".format(self.meta_info['epoch'] + 1, self.arg.num_epoch), end='\r')
                 # training
                 self.io.print_log('Training epoch: {}'.format(epoch))
                 self.train()
