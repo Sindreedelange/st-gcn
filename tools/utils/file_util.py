@@ -6,6 +6,8 @@ import os
 
 import sys
 
+from tools.views.output_messages import duplicate_files_error_message
+
 def update_num_classes_yaml(train_demo = ['train', 'demo']):
     '''
         When generating .npy and .pkl file, used for the training, verify that the number of classes in the data set corresponds to the various config files,
@@ -129,7 +131,7 @@ def verify_new_classes(class_list,
     
     return verified_class_list
 
-def get_label_text_file(path="resource/kinetics_skeleton/label_name_reduced.txt"):
+def get_label_text_file(path="resource/kinetics_skeleton/label_name.txt"):
     '''
         Returns the text file containing the class names of the reduced data set, used to train the model on
     '''
