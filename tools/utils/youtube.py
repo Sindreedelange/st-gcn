@@ -69,6 +69,8 @@ class youtube():
 
         # Refactor to separate method?
         for video in urls:
+            counter += 1
+            print("File {}/{}".format(counter, num_videos), end='\r')
             
             # Remember: [url, start, stop, label]
             url = video[0]
@@ -82,13 +84,10 @@ class youtube():
             # Check if necessary to download the video, or just run it through 'cleaning'
             duplicate_file = check_duplicates(folder_path = self.data_videos_download, file_name = video_name)
             if not duplicate_file:
-                counter += 1
-
-                print("\n Downloading, and cleaning video {} of {}".format(counter, num_videos), end='\r')
+                
                 # Download videos
                 self.download_youtube_video(video_download_f_path = video_f_path, url = url)
 
-                # TODO: Make video object, such that we can store their label index, when inputting the label
                 _ = update_label_list(label=label)
             else:
                 duplicate_files_error_message(output_folder = self.data_videos_download, file_name = video_name)
@@ -133,8 +132,7 @@ class youtube():
         output_file_f_path = self.find_available_name(output_folder = output_folder, video_name = video_name)
 
         # ffmpeg to cut the video
-        print("\n Cleaning file {}".format(video_name), end='\r')
-        cmd = ("ffmpeg -i " + video_path + " -ss " + start + " -vf scale=340:256 -framerate 30 -t " + str(duration) + " " + output_file_f_path)
+        cmd = ("ffmpeg -i " + video_path + " -ss " + start + " -vf scale=340:256 -framerate 30 -t " + str(duration) + " " + output_file_f_path + " -loglevel quiet")
         p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         #! ffmpeg -i $video_in_path -ss $start -vf scale=340:256 -framerate 30  -t $duration $save_path_ffmpeg_full
 
