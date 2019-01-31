@@ -1,16 +1,16 @@
-weights: ./work_dir/epoch60_model.pt
+weights: ./work_dir/epoch20_model.pt
 
 # feeder
 feeder: feeder.feeder.Feeder
 test_feeder_args:
-  data_path: ./data/Kinetics/kinetics-skeleton/val_data_reduced.npy
-  label_path: ./data/Kinetics/kinetics-skeleton/val_label_reduced.pkl
+  data_path: ./data/Kinetics/kinetics-skeleton/val_data.npy
+  label_path: ./data/Kinetics/kinetics-skeleton/val_label.pkl
 
 # model
 model: net.st_gcn.Model
 model_args:
   in_channels: 3
-  num_class: 3
+  num_class: 4
   edge_importance_weighting: True
   graph_args:
     layout: 'openpose'
@@ -19,4 +19,4 @@ model_args:
 # test 
 phase: test
 device: 0
-test_batch_size: 64
+test_batch_size: 8
