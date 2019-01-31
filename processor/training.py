@@ -113,6 +113,8 @@ class REC_Processor(Processor):
         self.io.print_timer()
 
     def test(self, evaluation=True):
+        message = "Testing model"
+        print_generic_message(message)
 
         self.model.eval()
         loader = self.data_loader['test']
@@ -121,16 +123,13 @@ class REC_Processor(Processor):
         label_frag = []
 
         for data, label in loader:
-            
             # get data
             data = data.float().to(self.dev)
             label = label.long().to(self.dev)
-
             # inference
             with torch.no_grad():
                 output = self.model(data)
             result_frag.append(output.data.cpu().numpy())
-
             # get loss
             if evaluation:
                 loss = self.loss(output, label)

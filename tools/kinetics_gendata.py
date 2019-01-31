@@ -8,12 +8,12 @@ import numpy as np
 from numpy.lib.format import open_memmap
 
 import subprocess
-from tools.utils.file_util import verify_directory, update_num_classes_yaml
+from utils.file_util import verify_directory, update_num_classes_yaml
 
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
 from feeder.feeder_kinetics import Feeder_kinetics
-
+sys.path.append("/home/stian/Master_thesis_fork/st-gcn/tools")
 
 toolbar_width = 30
 
@@ -82,9 +82,9 @@ if __name__ == '__main__':
     part = ['train', 'val']
     for p in part:
         # Path to skeleton files folder
-        data_path = '{}/kinetics_{}'.format(arg.data_path, p)
+        data_path = '{}/kinetics_{}_reduced'.format(arg.data_path, p)
         # Path to json files
-        label_path = '{}/kinetics_{}_label.json'.format(arg.data_path, p)
+        label_path = '{}/kinetics_label_reduced_{}.json'.format(arg.data_path, p)
         # Files to generate
         data_out_path = '{}/{}_data.npy'.format(arg.out_folder, p)
         label_out_path = '{}/{}_label.pkl'.format(arg.out_folder, p)

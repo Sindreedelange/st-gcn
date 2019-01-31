@@ -5,8 +5,8 @@ import ruamel.yaml
 import os
 
 import sys
-
-from tools.views.output_messages import duplicate_files_error_message
+sys.path.append("/home/stian/Master_thesis_fork/st-gcn/tools")
+from views.output_messages import duplicate_files_error_message
 
 def update_num_classes_yaml(train_demo = ['train', 'demo']):
     '''
@@ -131,7 +131,7 @@ def verify_new_classes(class_list,
     
     return verified_class_list
 
-def get_label_text_file(path="resource/kinetics_skeleton/label_name.txt"):
+def get_label_text_file(path="resource/kinetics_skeleton/label_name_reduced.txt"):
     '''
         Returns the text file containing the class names of the reduced data set, used to train the model on
     '''

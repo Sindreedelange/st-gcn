@@ -104,7 +104,7 @@ class IO():
         parser.add_argument('--device', type=int, default=0, nargs='+', help='the indexes of GPUs for training or testing')
 
         # visulize and debug
-        parser.add_argument('--print_log', type=str2bool, default=False, help='print logging or not')
+        parser.add_argument('--print_log', type=str2bool, default=True, help='print logging or not')
         parser.add_argument('--save_log', type=str2bool, default=False, help='save logging or not')
 
         # model

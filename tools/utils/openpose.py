@@ -215,7 +215,7 @@ class openpose():
 
         return ratio < train_val_ratio 
 
-    def openpose_skeleton_to_stgcn(self, train_val_ratio = 0.7, frame_limit = 300):
+    def openpose_skeleton_to_stgcn(self, train_val_ratio = 0.8, frame_limit = 300):
         '''
             "Translate" openpose skeletonfiles to one single skeletonfile which st-gcn accepts as input, for either training or validating
 
@@ -289,8 +289,9 @@ class openpose():
                 frame_data['skeleton'] = skeletons
                 stgcn_data_array += [frame_data]  
             
-                if frame_counter == frame_limit: # Do not exceed 300 frames
-                    message = ("Too many frames in file: {} - limiting it to {}".format(filename, frame_limit)) 
+                if frame_counter > frame_limit: # Do not exceed 300 frames
+                    message = ("Too many frames in file: {} - limiting it to {}".format(filename, frame_limit))
+                    print(message)
                     break
             
             # If < 300 frames - pad the dictionary by getting the x first frames in dictionary, where x = 300 - number of frames, and add them to the end
