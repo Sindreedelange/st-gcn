@@ -8,6 +8,9 @@ import numpy as np
 import torch
 import skvideo.io
 
+import pandas as pd
+import time
+
 from .io import IO
 import tools
 import tools.utils as utils
@@ -19,12 +22,16 @@ from tools.utils.file_util import verify_directory
 from tools.utils.openpose import openpose
 from tools.utils import video as video_util
 
+from tools.utils import file_util
+
 
 class Predict(IO):
     """
         Demo for Skeleton-based Action Recgnition
     """
     def start(self):
+
+        time_start = time.clock()
 
         openpose_bin_path = '{}/examples/openpose/openpose.bin'.format(self.arg.openpose)
         video_name = self.arg.video.split('/')[-1].split('.')[0]
@@ -89,6 +96,9 @@ class Predict(IO):
         label = output.sum(dim=3).sum(dim=2).sum(dim=1).argmax(dim=0)
 
         # Get prediction result
+        print("Getting prediction result")
+        print("Label: ", label)
+        print("Label name list: ", label_name)
         predicted_label = label_name[label]
         
         print('Prediction result: {}'.format(predicted_label))
@@ -134,7 +144,7 @@ class Predict(IO):
         chart_name = 'probability.png'
         chart_f_path = os.path.join(chart_directory_name, chart_name)
         plt.savefig(chart_f_path, bbox_inches='tight')
-        _ = subprocess.Popen(['gvfs-open', chart_f_path])
+        # _ = subprocess.Popen(['gvfs-open', chart_f_path])
 
 
         # visualization
@@ -155,6 +165,39 @@ class Predict(IO):
             writer.writeFrame(img)
         writer.close()
         print('The resulting video is stored in {}.'.format(output_result_path))
+
+        # Write summary to Excel document
+
+        # Define keys/columns for Excel document
+        key_model_name = 'Model name'
+        key_correct_prediction = 'Correct prediction'
+        key_prediction_values = '(Predicted) Labels: Values'
+        key_actual_label = '(Actual) Label'
+        key_time = 'Time'
+        key_list = [key_model_name, key_prediction_values, key_actual_label , key_time]
+
+        excel_summary_f_path = 'summary.xlsx'
+        try:
+            excel_summary = pd.read_excel(excel_summary_f_path)
+        except Exception:
+            message = "Not able to locate the given excel summary file {}".format(excel_summary_f_path)
+            print(message)
+            excel_summary = pd.DataFrame(columns=key_list)
+        
+        # Define new row for Excel 
+        new_entry = dict.fromkeys(key_list)
+        new_entry[key_model_name] = self.arg.weights.split("/")[-1]
+        new_entry[key_correct_prediction] = file_util.compare_strings(predicted_label, video_name)
+        new_entry[key_prediction_values] = dict(zip(labels, values))
+        new_entry[key_actual_label] = video_name
+        new_entry[key_time] = (time.clock() - time_start)
+
+        # Add the new row to the Excel document
+        excel_summary = excel_summary.append(new_entry, ignore_index=True)
+
+        # Save it
+        excel_summary.to_excel(excel_summary_f_path, index=False)
+
 
     @staticmethod
     def get_parser(add_help=False):
