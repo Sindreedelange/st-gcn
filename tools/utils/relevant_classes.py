@@ -31,15 +31,15 @@ class relevant_classes():
             return_dict = {}
         else:
             return_dict = file2dict(relevant_classes_dict)
-
         
         for (outer_key, outer_value) in dict_extract.items():
             # Finner de elemente med 'label' == klassene i class_list
             label = outer_value['label']
             label_index = label_index_dict.get(label)
             # Lager en ny dictionary med disse elementene
-            return_dict[outer_key] = outer_value
-            return_dict[outer_key]['label_index'] = label_index
+            if label in class_list:
+                return_dict[outer_key] = outer_value
+                return_dict[outer_key]['label_index'] = label_index
 
         # Returnerer nye dictionary
         return return_dict
