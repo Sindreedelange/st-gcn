@@ -3,6 +3,7 @@ import pickle
 import json
 import ruamel.yaml
 import os
+import pandas as pd
 
 import sys
 sys.path.append("/home/stian/Master_thesis_fork/st-gcn/tools")
@@ -211,3 +212,25 @@ def verify_directory(dir_path):
     if not os.path.isdir(dir_path):
         print('{} not a directory, but making it now \n'.format(dir_path))
         os.makedirs(dir_path)
+
+def get_prediction_summary_excel(path="work_dir/prediction_summary.xlsx"):
+    '''
+        Get an Excel sheet to where one should write summary information from prediction runs 
+
+        Returns: Excel sheet
+    '''
+    try:
+        excel_summary = pd.read_excel(path)
+    except Exception:
+        message = "Not able to locate the given excel summary file {}".format(path)
+        print(message)
+        # Define keys/columns for Excel document
+        key_model_name = 'Model name'
+        key_correct_prediction = 'Correct prediction'
+        key_prediction_values = '(Predicted) Labels: Values'
+        key_actual_label = '(Actual) Label'
+        key_time = 'Time'
+        key_list = [key_model_name, key_correct_prediction, key_prediction_values, key_actual_label , key_time]
+
+        excel_summary = pd.DataFrame(columns=key_list)
+    return excel_summary

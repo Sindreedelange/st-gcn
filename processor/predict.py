@@ -41,6 +41,7 @@ class Predict(IO):
         output_result_dir = self.arg.output_dir
         output_result_path = '{}/{}.avi'.format(output_result_dir, video_name)
         label_name_path = 'resource/kinetics_skeleton/label_name_reduced.txt'
+        model_name = self.arg.weights.split("/")[-1]
         with open(label_name_path) as f:
             label_name = f.readlines()
             label_name = [line.rstrip() for line in label_name]
@@ -141,9 +142,10 @@ class Predict(IO):
         # plt.show()
         chart_directory_name = 'charts'
         verify_directory(chart_directory_name)
-        chart_name = 'probability.png'
+        chart_name = '{}_probability.png'.format(model_name)
         chart_f_path = os.path.join(chart_directory_name, chart_name)
         plt.savefig(chart_f_path, bbox_inches='tight')
+        print('The resulting barchart is stored in {}.'.format(chart_f_path))
         # _ = subprocess.Popen(['gvfs-open', chart_f_path])
 
 
@@ -167,36 +169,25 @@ class Predict(IO):
         print('The resulting video is stored in {}.'.format(output_result_path))
 
         # Write summary to Excel document
-
-        # Define keys/columns for Excel document
-        key_model_name = 'Model name'
-        key_correct_prediction = 'Correct prediction'
-        key_prediction_values = '(Predicted) Labels: Values'
-        key_actual_label = '(Actual) Label'
-        key_time = 'Time'
-        key_list = [key_model_name, key_prediction_values, key_actual_label , key_time]
-
-        excel_summary_f_path = 'summary.xlsx'
-        try:
-            excel_summary = pd.read_excel(excel_summary_f_path)
-        except Exception:
-            message = "Not able to locate the given excel summary file {}".format(excel_summary_f_path)
-            print(message)
-            excel_summary = pd.DataFrame(columns=key_list)
+        prediction_summary_excel_file_name = "prediction_summary.xlsx"
+        prediction_summary_excel_folder = self.arg.work_dir.split("/")[1]
+        prediction_summary_excel_f_path = os.path.join(prediction_summary_excel_folder, prediction_summary_excel_file_name)
+        prediction_summary_excel = file_util.get_prediction_summary_excel(prediction_summary_excel_file_name)
         
         # Define new row for Excel 
-        new_entry = dict.fromkeys(key_list)
-        new_entry[key_model_name] = self.arg.weights.split("/")[-1]
-        new_entry[key_correct_prediction] = file_util.compare_strings(predicted_label, video_name)
-        new_entry[key_prediction_values] = dict(zip(labels, values))
-        new_entry[key_actual_label] = video_name
-        new_entry[key_time] = (time.clock() - time_start)
+        column_headers_list = list(prediction_summary_excel)
+        new_entry = dict.fromkeys(column_headers_list)
+        new_entry[column_headers_list[0]] = model_name
+        new_entry[column_headers_list[1]] = file_util.compare_strings(predicted_label, video_name)
+        new_entry[column_headers_list[2]] = dict(zip(labels, values))
+        new_entry[column_headers_list[3]] = video_name
+        new_entry[column_headers_list[4]] = (time.clock() - time_start)
 
         # Add the new row to the Excel document
-        excel_summary = excel_summary.append(new_entry, ignore_index=True)
+        prediction_summary_excel = prediction_summary_excel.append(new_entry, ignore_index=True)
 
         # Save it
-        excel_summary.to_excel(excel_summary_f_path, index=False)
+        prediction_summary_excel.to_excel(prediction_summary_excel_f_path, index=False)
 
 
     @staticmethod
