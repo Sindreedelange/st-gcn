@@ -2,6 +2,8 @@ from tools.utils.relevant_classes import relevant_classes
 from tools.utils.file_util import *
 from tools.views.output_messages import *
 
+from torchlight import str2bool
+
 import os
 import argparse
 
@@ -12,14 +14,20 @@ class extract_relevant_classes():
 
         def __init__(self, 
                         classes,
+                        random,
                         data_folder_path = "data/Kinetics/kinetics-skeleton",
                         output_dict_name = "kinetics_label_reduced.json"):
                 '''
                         classes: List - containing names of the desired classes 
+                        random: Boolean - whether or not to extract a certain amount of random videos, and theirs corresponding data, and label them as 'unknown'
                         output_folder_path: String - path to data folder
                         output_file_name: String - name of the .json file in which to store the skeleton information 
                 '''
                 self.classes = classes
+                self.random = random
+
+                if self.random:
+                        self.classes.append("unknown")
 
                 # Dictionary to store the relevant class names with their new respective label index, used to update label index when moving the files
                 self.dict_label_index = dict.fromkeys(self.classes)
@@ -51,18 +59,19 @@ class extract_relevant_classes():
                 '''
                 # Output message to user
                 start_extracting_relevant_classes_message()
-
                 self.fill_label_index_dict(self.dict_label_index)
- 
+
                 relevant_classes_dict_train = relevant_classes.get_relevant_classes_dict(class_list = self.classes,
                                                                                                 label_index_dict = self.dict_label_index,  
                                                                                                 input_path = self.data_folder_path,
-                                                                                                train_val = 'train')
+                                                                                                train_val = 'train',
+                                                                                                random = self.random)
 
                 relevant_classes_dict_val = relevant_classes.get_relevant_classes_dict(class_list = self.classes, 
                                                                                                 label_index_dict = self.dict_label_index, 
                                                                                                 input_path = self.data_folder_path,
-                                                                                                train_val = 'val')
+                                                                                                train_val = 'val',
+                                                                                                random = self.random)
 
                 # Move the relevant skeleton files from the training folder 
                 relevant_classes.copy_relevant_files(dict_ = relevant_classes_dict_train, train_val = 'train', data_path = self.data_folder_path)
@@ -84,17 +93,20 @@ if __name__ == '__main__':
                 description='This is a program in which one can specify class names which to extract, such that the model can be trained on these rather than the entire data set. NOTE: This is only relevant if the user has downloaded the "original" dataset from ST-GCN')
 
         parser.add_argument('-C', '--classes', nargs='+', help='List of class names')
+        parser.add_argument('-R', '--random', type=str2bool, default=False, help='Generate a subset of "random" actions or not')
 
         # Read arguments
         args = parser.parse_args()
+        print(args.classes)
+        print(args.random)
         
         # Verify that the inputed classes are valid
         valid_classes = verify_new_classes(args.classes)
-
-        # Could've specified deafult classes, but do not really see the value in this
+#
+        ## Could've specified deafult classes, but do not really see the value in this
         if valid_classes:
-                extract = extract_relevant_classes(classes = args.classes)
+                extract = extract_relevant_classes(classes = args.classes, random = args.random)
                 extract.start()
-        else:
-                print('\n The inputed classes were invalid, please try again')
+        #else:
+        #        print('\n The inputed classes were invalid, please try again')
         

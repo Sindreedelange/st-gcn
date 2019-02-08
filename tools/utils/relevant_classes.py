@@ -1,19 +1,23 @@
 from .file_util import *
 import os
 import shutil
+import random as ra
+import copy
 from tools.views.output_messages import copy_files_message, copy_files_progress_message
 
 class relevant_classes():
 
     @staticmethod
-    def get_relevant_classes_dict(class_list, label_index_dict, input_path, train_val, relevant_classes_dict=None):
+    def get_relevant_classes_dict(class_list, label_index_dict, input_path, train_val, random, relevant_classes_dict=None):
         '''
             Based on provided list of classes, extract the relevant dictionary entries, where the 'label' key == one of the classes in the class list
             Furthermore, updated its label_index, such that it corresponds to its line number in 'label_name_reduced.txt'
 
             class_list: List - class names that one wishes to extract 
+            label_index_dict: Dictionary - label name: label index
             train_val: String - Are the classes to be extracted from the training set, or the validation set. 
                 Can either be "train" or "val"
+            random = Boolean - whether or not to extract a certain amount of random videos, and theirs corresponding data, and label them as 'unknown'
             relevant_classes_dict: String - Path to already existing dictionary (.json file) which we are to append the new information to
 
             Returns: Dictionary - filename: 
@@ -26,6 +30,10 @@ class relevant_classes():
         dict_extract_name = 'kinetics_{}_label.json'.format(train_val)
         dict_extract_f_path = os.path.join(input_path, dict_extract_name)
         dict_extract = file2dict(dict_extract_f_path)
+
+        # Make a copy of the dictionary, such that we can remove entries from it (relevant because of addition of 'random')
+        # This reduces the pool of possible entries, such that we do not need to worry about duplicates 
+        dict_extract_dcopy = copy.deepcopy(dict_extract)
         
         if relevant_classes_dict is None:
             return_dict = {}
@@ -40,6 +48,25 @@ class relevant_classes():
             if label in class_list:
                 return_dict[outer_key] = outer_value
                 return_dict[outer_key]['label_index'] = label_index
+                # Removes the entry from the dictionary
+                del(dict_extract_dcopy[outer_key])
+        if random:
+            num_random_files = 600
+            # Get a list of random entries from (copy of) original 'summary' dict
+            random_entries_list = ra.sample(dict_extract_dcopy.items(), num_random_files)
+            # Cast list to dictionary
+            random_entries_dict = dict(random_entries_list)
+            # Edit the label name, and label index
+            label_index = label_index_dict.get('unknown')
+            for (outer_key, outer_value) in random_entries_dict.items():
+                print("Editing label from {}".format(random_entries_dict[outer_key]['label']))
+                random_entries_dict[outer_key]['label'] = 'unknown'
+                print("to: {}".format(random_entries_dict[outer_key]['label']))
+                print("And the label index from: ".format(random_entries_dict[outer_key]['label_index']))
+                random_entries_dict[outer_key]['label_index'] = label_index
+                print("to: {}".format(random_entries_dict[outer_key]['label_index']))
+            # Should in theory not cause any overlaps (seeing as anything in the return_dict is removed from the dict_extract_dcopy)
+            return_dict.update(random_entries_dict)
 
         # Returnerer nye dictionary
         return return_dict
