@@ -380,7 +380,7 @@ class openpose():
         p.wait()
 
     @staticmethod
-    def json_pack(snippets_dir, video_name, frame_width, frame_height, label='unknown', label_index=-1):
+    def json_pack(snippets_dir, video_name, frame_width, frame_height, label='null', label_index=-1):
         sequence_info = []
         p = Path(snippets_dir)
         for path in p.glob(video_name+'*.json'):
