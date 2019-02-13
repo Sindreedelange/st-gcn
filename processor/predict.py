@@ -66,7 +66,7 @@ class Predict(IO):
 
         p.wait()
         # pack openpose ouputs - Get the video frames from the 'openposed video', which are to ran through the network (predicted on)
-        video = video_util.get_video_frames(self.arg.video)
+        video = video_util.get_video_frames(self.arg.video) # Seemingly only used for putting keypoints on top of frames, and outputing demo video
 
         height, width, _ = video[0].shape
         video_info = openpose.json_pack(
