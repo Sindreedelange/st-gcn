@@ -172,7 +172,8 @@ class Predict(IO):
         prediction_summary_excel_file_name = "prediction_summary.xlsx"
         prediction_summary_excel_folder = self.arg.work_dir.split("/")[1]
         prediction_summary_excel_f_path = os.path.join(prediction_summary_excel_folder, prediction_summary_excel_file_name)
-        prediction_summary_excel = file_util.get_prediction_summary_excel(prediction_summary_excel_file_name)
+        prediction_summary_excel = file_util.get_prediction_summary_excel(prediction_summary_excel_f_path)
+        print(prediction_summary_excel)
         
         # Define new row for Excel 
         column_headers_list = list(prediction_summary_excel)
