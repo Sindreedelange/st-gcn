@@ -4,6 +4,8 @@ import sys
 import argparse
 import yaml
 import numpy as np
+import pandas as pd 
+import os
 
 # torch
 import torch
@@ -19,6 +21,10 @@ from torchlight import import_class
 from .processor import Processor
 
 from tools.views.output_messages import *
+
+import json
+
+from scipy.special import softmax
 
 def weights_init(m):
     classname = m.__class__.__name__
@@ -86,7 +92,7 @@ class REC_Processor(Processor):
         loader = self.data_loader['train']
         loss_value = []
 
-        for data, label in loader:
+        for data, label, sample_name in loader:
 
             # get data
             data = data.float().to(self.dev)
@@ -122,19 +128,23 @@ class REC_Processor(Processor):
         result_frag = []
         label_frag = []
 
-        for data, label in loader:
+        for data, label, sample_name in loader:
             # get data
             data = data.float().to(self.dev)
             label = label.long().to(self.dev)
             # inference
             with torch.no_grad():
                 output = self.model(data)
+
             result_frag.append(output.data.cpu().numpy())
             # get loss
             if evaluation:
+                # print("Output: {}\nLabel: {}".format(output, label))
                 loss = self.loss(output, label)
                 loss_value.append(loss.item())
                 label_frag.append(label.data.cpu().numpy())
+
+            self.save_to_csv(file_names = sample_name, labels = label, predicted_values = output)
 
         self.result = np.concatenate(result_frag)
         if evaluation:
@@ -145,6 +155,47 @@ class REC_Processor(Processor):
             # show top-k accuracy
             for k in self.arg.show_topk:
                 self.show_topk(k)
+
+    def save_to_csv(self, file_names, labels, predicted_values):
+        path = "validation_summary.csv"
+        df = pd.DataFrame()
+        if os.path.isfile(path):
+            df = pd.read_csv(path)
+        else:
+            df = pd.DataFrame(columns=['File name', 'Actual Label' , 'Predicted Label', 'Predicted Values %'])
+        for i in range(len(file_names)):
+            predicted_values_list = [v.item() for v in predicted_values[i]]
+            # max_val_idx, _ = self.list_max_val(predicted_values[i])
+            preds_perc = self.get_predictions_in_percentage(predicted_values_list)
+            value, key = self.dict_max_value(dic = preds_perc)
+            #print("File names: {}\nLabels: {}\nPredicted label: {}\nPredictions in percentages: {}".format(
+            #    file_names[i], labels[i].item(), max_val_idx, preds_perc
+            #))
+            new_row = [file_names[i], labels[i].item(), key, preds_perc]
+            print(new_row)
+            df.loc[len(df)] = new_row
+        df.to_csv(path, index=False)
+
+    def dict_max_value(self, dic):
+        return max(zip(dic.values(), dic.keys()))
+    
+    def list_max_val(self, li):
+        l = [l.item() for l in li]
+        max_val = max(l)
+        max_idx = l.index(max_val)
+        return max_idx, max_val
+    
+    def get_predictions_in_percentage(self, li):
+        min_value = np.amin(li)
+        preds_pos = li + (min_value ** 2) # So it is a positive number
+        preds_soft = softmax(preds_pos)
+        top5 = preds_soft.argsort()[-5:][::-1]
+        
+        zipped = {}
+        for el in top5:
+            zipped[str(el)] = round((preds_soft[el]*100), 3)
+
+        return zipped
 
     @staticmethod
     def get_parser(add_help=False):
