@@ -77,8 +77,12 @@ class youtube():
             label = video[3]
 
             # Name the files " 'youtube extension'-'label name'.avi (switched from mp4 because of codec problems) "
-            video_name = url.split("=")[1] + "---" + label + ".mp4"
-            
+            try:
+                video_name = url.split("=")[1] + "---" + label + ".mp4"
+            except Exception:
+                print("Unable to extract video name (aka.splitting on '=') from url: {}\nMoving on to next file".format(url))
+                continue
+
             video_f_path = os.path.join(self.data_videos_download, video_name)
 
             # Check if necessary to download the video, or just run it through 'cleaning'
