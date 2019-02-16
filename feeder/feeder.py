@@ -74,6 +74,7 @@ class Feeder(torch.utils.data.Dataset):
         # get data
         data_numpy = np.array(self.data[index])
         label = self.label[index]
+        sample_name = self.sample_name[index]
         
         # processing
         if self.random_choose:
@@ -83,4 +84,4 @@ class Feeder(torch.utils.data.Dataset):
         if self.random_move:
             data_numpy = tools.random_move(data_numpy)
 
-        return data_numpy, label
+        return data_numpy, label, sample_name
