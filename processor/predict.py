@@ -31,9 +31,19 @@ class Predict(IO):
     """
         Demo for Skeleton-based Action Recgnition
     """
+
+    def normalize(self, arr):
+        min_val = np.amin(arr)
+        max_val = np.amax(arr)
+        diff = max_val - min_val
+        return ((arr - min_val) / diff) 
+
+    def round_traditional(self, val, digits):
+        return round(val+10**(-len(str(val))-1), digits)
+    
     def start(self):
 
-        time_start = time.clock()
+        time_start = time.time()
 
         openpose_bin_path = '{}/examples/openpose/openpose.bin'.format(self.arg.openpose)
         video_name = self.arg.video.split('/')[-1].split('.')[0]
@@ -92,9 +102,7 @@ class Predict(IO):
         print('\nNetwork forward...')
         self.model.eval()
         output, feature = self.model.extract_feature(data)
-        print(output.shape)
         output = output[0]
-        print(output.shape)
         feature = feature[0]
         intensity = (feature*feature).sum(dim=0)**0.5
         intensity = intensity.cpu().detach().numpy()
@@ -102,7 +110,7 @@ class Predict(IO):
 
         # Get prediction result
         print("Getting prediction result")
-        print("Label: ", label)
+        print("Label: ", label.item())
         print("Label name list: ", label_name)
         predicted_label = label_name[label]
         
@@ -111,46 +119,53 @@ class Predict(IO):
         
         predictions = output.sum(dim=3).sum(dim=2).sum(dim=1)
         predictions_np = predictions.data.cpu().numpy()
-
-        # adding the minimum value in the array to every element 
-        # to make everything positive
-        min_value = np.amin(predictions_np)
-        preidictions_np_positive = predictions_np - min_value
+        print("Predictions: {}".format(predictions_np))
 
         # normalizing
-        sum_elements = np.sum(preidictions_np_positive)
-        predictions_norm = preidictions_np_positive / sum_elements
+        preds_norm = self.normalize(predictions_np)
+        print("Predictions norm: {}".format(preds_norm))
 
+        # Softmax
+        preds_soft = softmax(preds_norm)
+        print("Preds softmax: {}".format(preds_soft))
+        top5 = preds_soft.argsort()[-5:][::-1]
 
-        labels = []
-        values = []
-
-        # Get top 5 predictions
-        print("---------------------------------------------\n{}\n-----------------------------".format(predictions_norm))
-        predictions_np_top5 = predictions_norm.argsort()[-5:][::-1]
-        for label in predictions_np_top5:
-            labels.append(label_name[label])
-            values.append(predictions_norm[label]*100)
-
-        print("Labels: ", labels)
-        print("Values: ", values)
+        zipped = {} 
+        for el in top5:
+            zipped[label_name[el]] = self.round_traditional(val = (preds_soft[el]*100), digits = 3)
+        
+        print(zipped)
+#
+#
+        #labels = []
+        #values = []
+#
+        ## Get top 5 predictions
+        #print("---------------------------------------------\n{}\n-----------------------------".format(predictions_norm))
+        #predictions_np_top5 = predictions_norm.argsort()[-5:][::-1]
+        #for label in predictions_np_top5:
+        #    labels.append(label_name[label])
+        #    values.append(predictions_norm[label]*100)
+#
+        #print("Labels: ", labels)
+        #print("Values: ", values)
 
 
         # Matplot - barchart
-        plt.figure(num=None, figsize=(18, 9), dpi=200, facecolor='w', edgecolor='k')
-        index = np.arange(len(values))
-        plt.bar(index, values)
-        plt.xlabel('Class', fontsize=12, labelpad=10)
-        plt.ylabel('Probability', fontsize=12, labelpad=10)
-        plt.xticks(index, labels, fontsize=10, rotation=30)
-        plt.title("Top 5 classes", fontsize=12, pad=10)
-        # plt.show()
-        chart_directory_name = 'charts'
-        verify_directory(chart_directory_name)
-        chart_name = '{}_probability.png'.format(model_name)
-        chart_f_path = os.path.join(chart_directory_name, chart_name)
-        plt.savefig(chart_f_path, bbox_inches='tight')
-        print('The resulting barchart is stored in {}.'.format(chart_f_path))
+        #plt.figure(num=None, figsize=(18, 9), dpi=200, facecolor='w', edgecolor='k')
+        #index = np.arange(len(values))
+        #plt.bar(index, values)
+        #plt.xlabel('Class', fontsize=12, labelpad=10)
+        #plt.ylabel('Probability', fontsize=12, labelpad=10)
+        #plt.xticks(index, labels, fontsize=10, rotation=30)
+        #plt.title("Top 5 classes", fontsize=12, pad=10)
+        ## plt.show()
+        #chart_directory_name = 'charts'
+        #verify_directory(chart_directory_name)
+        #chart_name = '{}_probability.png'.format(model_name)
+        #chart_f_path = os.path.join(chart_directory_name, chart_name)
+        #plt.savefig(chart_f_path, bbox_inches='tight')
+        #print('The resulting barchart is stored in {}.'.format(chart_f_path))
         # _ = subprocess.Popen(['gvfs-open', chart_f_path])
 
 
@@ -180,7 +195,7 @@ class Predict(IO):
 
         pred_summary_csv = prediction_summary_csv = file_util.get_prediction_summary_csv(pred_summary_csv_fpath)
         # Model name, Actual label, Predicted label, Predicted values (omgjøre), Time
-        new_row = [model_name, video_name, predicted_label, dict(zip(labels, values)), (time.clock() - time_start)]
+        new_row = [model_name, video_name, predicted_label, zipped, self.round_traditional(val = (time.time() - time_start), digits = 0)]
 
         pred_summary_csv.loc[len(pred_summary_csv)] = new_row
         pred_summary_csv.to_csv(pred_summary_csv_fpath, index=False)
