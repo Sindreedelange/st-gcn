@@ -213,24 +213,28 @@ def verify_directory(dir_path):
         print('{} not a directory, but making it now \n'.format(dir_path))
         os.makedirs(dir_path)
 
-def get_prediction_summary_excel(path="work_dir/prediction_summary.xlsx"):
+def get_prediction_summary_csv(path):
     '''
-        Get an Excel sheet to where one should write summary information from prediction runs 
+        Get a .csv file to where one should write summary information from prediction runs 
 
-        Returns: Excel sheet
+        Returns: .csv file
     '''
-    try:
-        excel_summary = pd.read_excel(path)
-    except Exception:
-        message = "Not able to locate the given excel summary file {}".format(path)
-        print(message)
-        # Define keys/columns for Excel document
-        key_model_name = 'Model name'
-        key_correct_prediction = 'Correct prediction'
-        key_prediction_values = '(Predicted) Labels: Values'
-        key_actual_label = '(Actual) Label'
-        key_time = 'Time'
-        key_list = [key_model_name, key_correct_prediction, key_prediction_values, key_actual_label , key_time]
-
-        excel_summary = pd.DataFrame(columns=key_list)
-    return excel_summary
+    if os.path.isfile(path):
+        return pd.read_csv(path)
+    else:
+        return pd.DataFrame(columns=['Model name', 'Correct prediction', '(Predicted) Labels: Values', '(Actual) Label', 'Time'])
+    #try:
+    #    excel_summary = pd.read_csv(path)
+    #except Exception:
+    #    message = "Not able to locate the given excel summary file {}".format(path)
+    #    print(message)
+    #    # Define keys/columns for Excel document
+    #    key_model_name = 'Model name'
+    #    key_correct_prediction = 'Correct prediction'
+    #    key_prediction_values = '(Predicted) Labels: Values'
+    #    key_actual_label = '(Actual) Label'
+    #    key_time = 'Time'
+    #    key_list = [key_model_name, key_correct_prediction, key_prediction_values, key_actual_label , key_time]
+#
+    #    excel_summary = pd.DataFrame(columns=key_list)
+    #return excel_summary
