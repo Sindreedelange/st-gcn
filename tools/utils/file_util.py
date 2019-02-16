@@ -223,18 +223,3 @@ def get_prediction_summary_csv(path):
         return pd.read_csv(path)
     else:
         return pd.DataFrame(columns=['Model name', 'Correct prediction', '(Predicted) Labels: Values', '(Actual) Label', 'Time'])
-    #try:
-    #    excel_summary = pd.read_csv(path)
-    #except Exception:
-    #    message = "Not able to locate the given excel summary file {}".format(path)
-    #    print(message)
-    #    # Define keys/columns for Excel document
-    #    key_model_name = 'Model name'
-    #    key_correct_prediction = 'Correct prediction'
-    #    key_prediction_values = '(Predicted) Labels: Values'
-    #    key_actual_label = '(Actual) Label'
-    #    key_time = 'Time'
-    #    key_list = [key_model_name, key_correct_prediction, key_prediction_values, key_actual_label , key_time]
-#
-    #    excel_summary = pd.DataFrame(columns=key_list)
-    #return excel_summary
