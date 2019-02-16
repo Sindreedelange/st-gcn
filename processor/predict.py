@@ -90,7 +90,9 @@ class Predict(IO):
         print('\nNetwork forward...')
         self.model.eval()
         output, feature = self.model.extract_feature(data)
+        print(output.shape)
         output = output[0]
+        print(output.shape)
         feature = feature[0]
         intensity = (feature*feature).sum(dim=0)**0.5
         intensity = intensity.cpu().detach().numpy()
@@ -122,6 +124,7 @@ class Predict(IO):
         values = []
 
         # Get top 5 predictions
+        print("---------------------------------------------\n{}\n-----------------------------".format(predictions_norm))
         predictions_np_top5 = predictions_norm.argsort()[-5:][::-1]
         for label in predictions_np_top5:
             labels.append(label_name[label])
@@ -168,27 +171,17 @@ class Predict(IO):
         writer.close()
         print('The resulting video is stored in {}.'.format(output_result_path))
 
-        # Write summary to Excel document
-        prediction_summary_excel_file_name = "prediction_summary.xlsx"
-        prediction_summary_excel_folder = self.arg.work_dir.split("/")[1]
-        prediction_summary_excel_f_path = os.path.join(prediction_summary_excel_folder, prediction_summary_excel_file_name)
-        prediction_summary_excel = file_util.get_prediction_summary_excel(prediction_summary_excel_f_path)
-        print(prediction_summary_excel)
-        
-        # Define new row for Excel 
-        column_headers_list = list(prediction_summary_excel)
-        new_entry = dict.fromkeys(column_headers_list)
-        new_entry[column_headers_list[0]] = model_name
-        new_entry[column_headers_list[1]] = file_util.compare_strings(predicted_label, video_name)
-        new_entry[column_headers_list[2]] = dict(zip(labels, values))
-        new_entry[column_headers_list[3]] = video_name
-        new_entry[column_headers_list[4]] = (time.clock() - time_start)
+        # Write summary to csv document
+        pred_summary_csv_file_name = "prediction_summary.csv"
+        pred_summary_csv_folder = self.arg.work_dir.split("/")[1]
+        pred_summary_csv_fpath = os.path.join(pred_summary_csv_folder, pred_summary_csv_file_name)
 
-        # Add the new row to the Excel document
-        prediction_summary_excel = prediction_summary_excel.append(new_entry, ignore_index=True)
+        pred_summary_csv = prediction_summary_csv = file_util.get_prediction_summary_csv(pred_summary_csv_fpath)
 
-        # Save it
-        prediction_summary_excel.to_excel(prediction_summary_excel_f_path, index=False)
+        new_row = [model_name, file_util.compare_strings(predicted_label, video_name), dict(zip(labels, values)), video_name, (time.clock() - time_start)]
+
+        pred_summary_csv.loc[len(pred_summary_csv)] = new_row
+        pred_summary_csv.to_csv(pred_summary_csv_fpath, index=False)
 
 
     @staticmethod
@@ -203,7 +196,7 @@ class Predict(IO):
 
         # region arguments yapf: disable
         parser.add_argument('--video',
-            default='resource/media/jumping_jacks.mp4',
+            default='resource/media/squats.mp4',
             help='Path to video')
         parser.add_argument('--openpose',
             default='openpose/build',
