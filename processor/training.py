@@ -139,7 +139,6 @@ class REC_Processor(Processor):
             result_frag.append(output.data.cpu().numpy())
             # get loss
             if evaluation:
-                # print("Output: {}\nLabel: {}".format(output, label))
                 loss = self.loss(output, label)
                 loss_value.append(loss.item())
                 label_frag.append(label.data.cpu().numpy())
@@ -168,7 +167,6 @@ class REC_Processor(Processor):
             preds_perc = self.get_predictions_in_percentage(predicted_values_list)
             value, key = self.dict_max_value(dic = preds_perc)
             new_row = [file_names[i], labels[i].item(), key, preds_perc]
-            print(new_row)
             df.loc[len(df)] = new_row
         df.to_csv(path, index=False)
 
