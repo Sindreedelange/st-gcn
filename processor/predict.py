@@ -24,6 +24,8 @@ from tools.utils import video as video_util
 
 from tools.utils import file_util
 
+from scipy.special import softmax
+
 
 class Predict(IO):
     """
@@ -177,8 +179,8 @@ class Predict(IO):
         pred_summary_csv_fpath = os.path.join(pred_summary_csv_folder, pred_summary_csv_file_name)
 
         pred_summary_csv = prediction_summary_csv = file_util.get_prediction_summary_csv(pred_summary_csv_fpath)
-
-        new_row = [model_name, file_util.compare_strings(predicted_label, video_name), dict(zip(labels, values)), video_name, (time.clock() - time_start)]
+        # Model name, Actual label, Predicted label, Predicted values (omgjøre), Time
+        new_row = [model_name, video_name, predicted_label, dict(zip(labels, values)), (time.clock() - time_start)]
 
         pred_summary_csv.loc[len(pred_summary_csv)] = new_row
         pred_summary_csv.to_csv(pred_summary_csv_fpath, index=False)

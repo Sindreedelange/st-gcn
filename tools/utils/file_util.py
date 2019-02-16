@@ -222,4 +222,4 @@ def get_prediction_summary_csv(path):
     if os.path.isfile(path):
         return pd.read_csv(path)
     else:
-        return pd.DataFrame(columns=['Model name', 'Correct prediction', '(Predicted) Labels: Values', '(Actual) Label', 'Time'])
+        return pd.DataFrame(columns=['Model name', 'Actual label', 'Predicted label', 'Predicted values %', 'Time'])
