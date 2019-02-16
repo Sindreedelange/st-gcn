@@ -25,21 +25,13 @@ from tools.utils import video as video_util
 from tools.utils import file_util
 
 from scipy.special import softmax
+from tools.utils.number_util import normalize, round_traditional
 
 
 class Predict(IO):
     """
         Demo for Skeleton-based Action Recgnition
     """
-
-    def normalize(self, arr):
-        min_val = np.amin(arr)
-        max_val = np.amax(arr)
-        diff = max_val - min_val
-        return ((arr - min_val) / diff) 
-
-    def round_traditional(self, val, digits):
-        return round(val+10**(-len(str(val))-1), digits)
     
     def start(self):
 
@@ -119,20 +111,17 @@ class Predict(IO):
         
         predictions = output.sum(dim=3).sum(dim=2).sum(dim=1)
         predictions_np = predictions.data.cpu().numpy()
-        print("Predictions: {}".format(predictions_np))
 
         # normalizing
-        preds_norm = self.normalize(predictions_np)
-        print("Predictions norm: {}".format(preds_norm))
+        preds_norm = normalize(predictions_np)
 
         # Softmax
         preds_soft = softmax(preds_norm)
-        print("Preds softmax: {}".format(preds_soft))
         top5 = preds_soft.argsort()[-5:][::-1]
 
         zipped = {} 
         for el in top5:
-            zipped[label_name[el]] = self.round_traditional(val = (preds_soft[el]*100), digits = 3)
+            zipped[label_name[el]] = round_traditional(val = (preds_soft[el]*100), digits = 3)
         
         print(zipped)
 #
@@ -195,7 +184,7 @@ class Predict(IO):
 
         pred_summary_csv = prediction_summary_csv = file_util.get_prediction_summary_csv(pred_summary_csv_fpath)
         # Model name, Actual label, Predicted label, Predicted values (omgjøre), Time
-        new_row = [model_name, video_name, predicted_label, zipped, self.round_traditional(val = (time.time() - time_start), digits = 0)]
+        new_row = [model_name, video_name, predicted_label, zipped, round_traditional(val = (time.time() - time_start), digits = 0)]
 
         pred_summary_csv.loc[len(pred_summary_csv)] = new_row
         pred_summary_csv.to_csv(pred_summary_csv_fpath, index=False)
