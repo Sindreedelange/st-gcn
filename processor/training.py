@@ -157,7 +157,7 @@ class REC_Processor(Processor):
                 self.show_topk(k)
 
     def save_to_csv(self, file_names, labels, predicted_values):
-        path = "validation_summary.csv"
+        path = "inference_summary.csv"
         df = pd.DataFrame()
         if os.path.isfile(path):
             df = pd.read_csv(path)
@@ -165,12 +165,8 @@ class REC_Processor(Processor):
             df = pd.DataFrame(columns=['File name', 'Actual Label' , 'Predicted Label', 'Predicted Values %'])
         for i in range(len(file_names)):
             predicted_values_list = [v.item() for v in predicted_values[i]]
-            # max_val_idx, _ = self.list_max_val(predicted_values[i])
             preds_perc = self.get_predictions_in_percentage(predicted_values_list)
             value, key = self.dict_max_value(dic = preds_perc)
-            #print("File names: {}\nLabels: {}\nPredicted label: {}\nPredictions in percentages: {}".format(
-            #    file_names[i], labels[i].item(), max_val_idx, preds_perc
-            #))
             new_row = [file_names[i], labels[i].item(), key, preds_perc]
             print(new_row)
             df.loc[len(df)] = new_row
