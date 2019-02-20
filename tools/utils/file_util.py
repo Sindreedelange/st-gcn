@@ -223,3 +223,24 @@ def get_prediction_summary_csv(path):
         return pd.read_csv(path)
     else:
         return pd.DataFrame(columns=['Model name', 'Actual label', 'Predicted label', 'Predicted values %', 'Time'])
+
+def dict_max_value(dic):
+    '''
+        Get the key, value pair from a dictionary, in which the value has the highest value of the elements
+
+        Returns: Touple (Key, Value)
+    '''
+    return max(zip(dic.keys(), dic.values()))
+
+def get_class_name_from_index(index):
+    '''
+        Get the corresponding label name, from the inputed index 
+
+        Index: Int (masked as a string, hence the casting)
+
+        Return: String - label name
+    '''
+    label_file = get_label_text_file()
+    lines = label_file.readlines()
+    val = int(index)
+    return lines[val].rstrip()

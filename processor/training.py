@@ -28,6 +28,7 @@ import copy
 from scipy.special import softmax
 from tools.utils.file_util import get_label_text_file, compare_strings, verify_directory
 
+
 def weights_init(m):
     classname = m.__class__.__name__
     if classname.find('Conv1d') != -1:
@@ -120,7 +121,7 @@ class REC_Processor(Processor):
         self.show_epoch_info()
         self.io.print_timer()
 
-    def test(self, evaluation=True):
+    def test(self, evaluator = None, evaluation=True):
         message = "Testing model"
         print_generic_message(message)
 
@@ -152,7 +153,8 @@ class REC_Processor(Processor):
                 label_frag.append(label.data.cpu().numpy())
 
             # Save the inference information to a .csv file for further processing after all inference is finished
-            self.save_to_csv(path = train_inference_fpath, file_names = sample_name, labels = label, predicted_values = output)
+            #self.save_to_csv(path = train_inference_fpath, file_names = sample_name, labels = label, predicted_values = output)
+            self.evaluate.inference_full_add_row(file_name = sample_name, label = label, predicted_vals = output)
 
         self.result = np.concatenate(result_frag)
         if evaluation:
@@ -167,12 +169,13 @@ class REC_Processor(Processor):
         # Process inference information stored during testing and summarize for each class
         message = "Summarizing inference information"
         print_generic_message(message)
-        sum_dict = self.get_summarized_dict(path = train_inference_fpath)
-
-        inference_summary_fname = "inference_summary.csv"
-        inference_summary_fpath = os.path.join(summary_path, inference_summary_fname)
-
-        self.save_sum_summarised_csv(path = inference_summary_fpath, sum_dict = sum_dict)
+        self.evaluate.summarize_inference_full()
+        #sum_dict = self.get_summarized_dict(path = train_inference_fpath)
+#
+        #inference_summary_fname = "inference_summary.csv"
+        #inference_summary_fpath = os.path.join(summary_path, inference_summary_fname)
+#
+        #self.save_sum_summarised_csv(path = inference_summary_fpath, sum_dict = sum_dict)
 
     def save_sum_summarised_csv(self, path, sum_dict):
         gen_sum_dict = ['Correct', 'Incorrect', 'Sum']
