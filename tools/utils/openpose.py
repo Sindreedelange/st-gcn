@@ -106,7 +106,7 @@ class openpose():
 
             Return: Boolean - Whether or not the video was ran through openpose, successfully, or if it froze, such that the program had to be terminated
         '''
-        cmd = (self.openpose_bin_path + " --video " + input_f_path + " --model_folder " + self.model_folder + "--display 0 --write_json " + output_f_path + " --model_pose COCO --keypoint_scale 3")        
+        cmd = (self.openpose_bin_path + " --video " + input_f_path + " --model_folder " + self.model_folder + " --write_json " + output_f_path + " --model_pose COCO --keypoint_scale 3")        
         parent = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         # Wait until process is finished - not relevant anymore because the program needs to keep running in order to stop Openpose, if it freezes
@@ -226,8 +226,12 @@ class openpose():
         '''    
         # Make sure that the downloaded files are separated between 'train' and 'val'
         test_val_ratio_dict = self.get_num_labels(self.data_videos_keypoints)
+        counter = 0
+        num_folders = len(os.listdir(self.data_videos_keypoints))
 
         for folder in os.listdir(self.data_videos_keypoints):
+            counter += 1
+            print("Interpreting keypoint files {}/{}".format(counter, num_folders), end='\r')
             #print("--------------------------------------------------------------------- \n")
             #print("Currently working on {}".format(folder))
             # print("--------------------------------------------------------------------- \n")
