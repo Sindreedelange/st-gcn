@@ -51,7 +51,7 @@ class relevant_classes():
                 # Removes the entry from the dictionary
                 del(dict_extract_dcopy[outer_key])
         if random:
-            num_random_files = 600
+            num_random_files = 600 if train_val == 'train' else 100
             # Get a list of random entries from (copy of) original 'summary' dict
             random_entries_list = ra.sample(dict_extract_dcopy.items(), num_random_files)
             # Cast list to dictionary
