@@ -215,7 +215,7 @@ class openpose():
 
         return ratio < train_val_ratio 
 
-    def openpose_skeleton_to_stgcn(self, train_val_ratio = 0.8, frame_limit = 300):
+    def openpose_skeleton_to_stgcn(self, train_val_ratio = 0.9, frame_limit = 300):
         '''
             "Translate" openpose skeletonfiles to one single skeletonfile which st-gcn accepts as input, for either training or validating
 
