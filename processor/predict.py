@@ -178,7 +178,7 @@ class Predict(IO):
         print('The resulting video is stored in {}.'.format(output_result_path))
 
         # Write summary to csv document
-        pred_summary_csv_file_name = "prediction_summary.csv"
+        pred_summary_csv_file_name = "summary/prediction_summary.csv"
         pred_summary_csv_folder = self.arg.work_dir.split("/")[1]
         pred_summary_csv_fpath = os.path.join(pred_summary_csv_folder, pred_summary_csv_file_name)
 

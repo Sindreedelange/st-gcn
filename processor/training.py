@@ -23,9 +23,10 @@ from .processor import Processor
 from tools.views.output_messages import *
 
 import json
+import copy
 
 from scipy.special import softmax
-from tools.utils.file_util import get_label_text_file, compare_strings
+from tools.utils.file_util import get_label_text_file, compare_strings, verify_directory
 
 def weights_init(m):
     classname = m.__class__.__name__
@@ -129,6 +130,12 @@ class REC_Processor(Processor):
         result_frag = []
         label_frag = []
 
+        summary_path = os.path.join(self.arg.work_dir, 'summary')
+        verify_directory(summary_path)
+
+        train_inference_tot_fname = "train_inference.csv"
+        train_inference_fpath = os.path.join(summary_path, train_inference_tot_fname)
+
         for data, label, sample_name in loader:
             # get data
             data = data.float().to(self.dev)
@@ -144,7 +151,8 @@ class REC_Processor(Processor):
                 loss_value.append(loss.item())
                 label_frag.append(label.data.cpu().numpy())
 
-            self.save_to_csv(file_names = sample_name, labels = label, predicted_values = output)
+            # Save the inference information to a .csv file for further processing after all inference is finished
+            self.save_to_csv(path = train_inference_fpath, file_names = sample_name, labels = label, predicted_values = output)
 
         self.result = np.concatenate(result_frag)
         if evaluation:
@@ -156,8 +164,47 @@ class REC_Processor(Processor):
             for k in self.arg.show_topk:
                 self.show_topk(k)
 
-    def save_to_csv(self, file_names, labels, predicted_values):
-        path = "inference_summary.csv"
+        # Process inference information stored during testing and summarize for each class
+        message = "Summarizing inference information"
+        print_generic_message(message)
+        sum_dict = self.get_summarized_dict(path = train_inference_fpath)
+
+        inference_summary_fname = "inference_summary.csv"
+        inference_summary_fpath = os.path.join(summary_path, inference_summary_fname)
+
+        self.save_sum_summarised_csv(path = inference_summary_fpath, sum_dict = sum_dict)
+
+    def save_sum_summarised_csv(self, path, sum_dict):
+        gen_sum_dict = ['Correct', 'Incorrect', 'Sum']
+        df = pd.DataFrame(columns=gen_sum_dict)
+
+        for k, v in sum_dict.items():
+            df.loc[k] = v
+        df.to_csv(path)
+
+    def get_summarized_dict(self, path):
+        summary = pd.read_csv(path)
+
+        # Get the class names from the already summarized file
+        class_name_list = list(summary['Actual Label'].unique())
+        sum_dict = dict.fromkeys(class_name_list, {})
+        gen_sum_dict = {'Correct': 0, 'Incorrect': 0, 'Sum': 0}
+        for k, v in sum_dict.items():
+            sum_dict[k] = copy.deepcopy(gen_sum_dict)
+        
+        for _, row in summary.iterrows():
+            y_pred = row['Predicted Label']
+            y_true = row['Actual Label']
+            file_name = row['File name']            
+            if compare_strings(y_pred, y_true):
+                sum_dict[y_true]['Correct'] += 1
+            else:
+                sum_dict[y_true]['Incorrect'] += 1
+            sum_dict[y_true]['Sum'] += 1  
+
+        return sum_dict
+
+    def save_to_csv(self, path, file_names, labels, predicted_values):
         df = pd.DataFrame()
         if os.path.isfile(path):
             df = pd.read_csv(path)
@@ -168,7 +215,6 @@ class REC_Processor(Processor):
             preds_perc = self.get_predictions_in_percentage(predicted_values_list)
             value, key = self.dict_max_value(dic = preds_perc)
             
-            print("Labels[i].item(): {}".format(labels[i].item()))
             actual_label = self.get_label_name(labels[i].item())
 
             new_row = [file_names[i], actual_label, key, preds_perc]
@@ -195,13 +241,9 @@ class REC_Processor(Processor):
         preds_soft = softmax(preds_pos)
         top5 = preds_soft.argsort()[-5:][::-1]
         
-        print("Topp 5: {}".format(top5))
         zipped = {}
         counter = 0
         for el in top5:
-            print("-------------------------------")
-            print("{}: el = {}".format(counter, el))
-            print("-------------------------------")
             counter += 1
             label_name = self.get_label_name(index = el)
             zipped[label_name] = round((preds_soft[el]*100), 3)
