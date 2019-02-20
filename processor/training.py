@@ -156,16 +156,6 @@ class REC_Processor(Processor):
             for k in self.arg.show_topk:
                 self.show_topk(k)
 
-    def get_label_name(self, index):
-        lfile = get_label_text_file()
-        lines = lfile.readlines()
-        try:
-            val = int(index)
-            return lines[val].rstrip()
-        except Exception:
-            print("Got a string instead of an index? \n{}".format(index))
-            return index
-
     def save_to_csv(self, file_names, labels, predicted_values):
         path = "inference_summary.csv"
         df = pd.DataFrame()
@@ -178,14 +168,23 @@ class REC_Processor(Processor):
             preds_perc = self.get_predictions_in_percentage(predicted_values_list)
             value, key = self.dict_max_value(dic = preds_perc)
             
+            print("Labels[i].item(): {}".format(labels[i].item()))
             actual_label = self.get_label_name(labels[i].item())
-            pred_label = self.get_label_name(key)
 
-            new_row = [file_names[i], actual_label, pred_label, preds_perc]
-            print(new_row)
-            #new_row = [file_names[i], labels[i].item(), key, preds_perc]
+            new_row = [file_names[i], actual_label, key, preds_perc]
             df.loc[len(df)] = new_row
         df.to_csv(path, index=False)
+
+    
+    def get_label_name(self, index):
+        lfile = get_label_text_file()
+        lines = lfile.readlines()
+        try:
+            val = int(index)
+            return lines[val].rstrip()
+        except Exception:
+            print("Got a string instead of an index? \n{}".format(index))
+            return index
 
     def dict_max_value(self, dic):
         return max(zip(dic.values(), dic.keys()))
@@ -196,11 +195,14 @@ class REC_Processor(Processor):
         preds_soft = softmax(preds_pos)
         top5 = preds_soft.argsort()[-5:][::-1]
         
+        print("Topp 5: {}".format(top5))
         zipped = {}
+        counter = 0
         for el in top5:
             print("-------------------------------")
-            print("el: ", el)
+            print("{}: el = {}".format(counter, el))
             print("-------------------------------")
+            counter += 1
             label_name = self.get_label_name(index = el)
             zipped[label_name] = round((preds_soft[el]*100), 3)
 
