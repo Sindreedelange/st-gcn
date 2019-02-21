@@ -20,6 +20,8 @@ from torchlight import import_class
 from .io import IO
 
 from tools.views.output_messages import print_generic_message
+from tools.utils.evaluate import Evaluate
+
 
 class Processor(IO):
     """
@@ -36,6 +38,7 @@ class Processor(IO):
         self.load_data()
         self.load_optimizer()
 
+
     def init_environment(self):
         
         super().init_environment()
@@ -43,6 +46,9 @@ class Processor(IO):
         self.iter_info = dict()
         self.epoch_info = dict()
         self.meta_info = dict(epoch=0, iter=0)
+
+    def load_evaluator(self):
+        self.evaluate = Evaluate(work_dir = self.arg.work_dir)
 
     def load_optimizer(self):
         pass
@@ -87,7 +93,8 @@ class Processor(IO):
 
             if self.arg.pavi_log:
                 self.io.log('train', self.meta_info['iter'], self.iter_info)
-
+    
+    # Note: Not the test method used when 'self.test()' is called - it is the one in 'training.py'
     def train(self):
         for _ in range(100):
             self.iter_info['loss'] = 0
@@ -96,6 +103,7 @@ class Processor(IO):
         self.epoch_info['mean loss'] = 0
         self.show_epoch_info()
 
+    # Note: Not the test method used when 'self.test()' is called - it is the one in 'training.py'
     def test(self):
         for _ in range(100):
             self.iter_info['loss'] = 1
@@ -104,6 +112,7 @@ class Processor(IO):
         self.show_epoch_info()
 
     def start(self):
+        self.load_evaluator()
         self.io.print_log('Parameters:\n{}\n'.format(str(vars(self.arg))))
 
         # training phase
@@ -131,7 +140,7 @@ class Processor(IO):
                 if ((epoch + 1) % self.arg.eval_interval == 0) or (
                         epoch + 1 == self.arg.num_epoch):
                     self.io.print_log('Eval epoch: {}'.format(epoch))
-                    self.test()
+                    self.test(evaluator = self.evaluate)
                     self.io.print_log('Done.')
             
             print("Epoch {}/{}".format(self.meta_info['epoch'] + 1, self.arg.num_epoch))
@@ -177,8 +186,8 @@ class Processor(IO):
 
         # visulize and debug
         parser.add_argument('--log_interval', type=int, default=100, help='the interval for printing messages (#iteration)')
-        parser.add_argument('--save_interval', type=int, default=4, help='the interval for storing models (#iteration)')
-        parser.add_argument('--eval_interval', type=int, default=5, help='the interval for evaluating models (#iteration)')
+        parser.add_argument('--save_interval', type=int, default=10, help='the interval for storing models (#iteration)')
+        parser.add_argument('--eval_interval', type=int, default=1, help='the interval for evaluating models (#iteration)')
         parser.add_argument('--save_log', type=str2bool, default=True, help='save logging or not')
         parser.add_argument('--print_log', type=str2bool, default=True, help='print logging or not')
         parser.add_argument('--pavi_log', type=str2bool, default=False, help='logging on pavi or not')
