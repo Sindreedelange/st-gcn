@@ -50,7 +50,9 @@ class IO():
 
     def load_model(self, model, **model_args):
         Model = import_class(model)
+        # Model = 'net.st_gcn.Model'
         model = Model(**model_args)
+        # model = 'net.st_gcn.Model' w. architecture as defined in models/net/st_gcn
         self.model_text += '\n\n' + str(model)
         return model
 
@@ -60,11 +62,9 @@ class IO():
         if isinstance(ignore_weights, str):
             ignore_weights = [ignore_weights]
 
-        self.print_log('Load weights from {}.'.format(weights_path))
         weights = torch.load(weights_path)
         weights = OrderedDict([[k.split('module.')[-1],
                                 v.cpu()] for k, v in weights.items()])
-
         # filter weights
         for i in ignore_weights:
             ignore_name = list()
@@ -74,19 +74,24 @@ class IO():
             for n in ignore_name:
                 weights.pop(n)
                 self.print_log('Filter [{}] remove weights [{}].'.format(i,n))
+        
 
-        for w in weights:
-            self.print_log('Load weights [{}].'.format(w))
+        pretrained_dict = weights
+        model_dict = model.state_dict()
+        pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
+        model_dict.update(pretrained_dict)
+        #for w in weights:
+        #    self.print_log('Load weights [{}].'.format(w))
 
         try:
-            model.load_state_dict(weights)
+            model.load_state_dict(model_dict)
         except (KeyError, RuntimeError):
             state = model.state_dict()
-            diff = list(set(state.keys()).difference(set(weights.keys())))
+            diff = list(set(state.keys()).difference(set(pretrained_dict.keys())))
             for d in diff:
                 self.print_log('Can not find weights [{}].'.format(d))
-            state.update(weights)
-            model.load_state_dict(state)
+            #state.update(weights)
+            #model.load_state_dict(state)
         return model
 
     def save_pkl(self, result, filename):
