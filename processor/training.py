@@ -152,8 +152,6 @@ class REC_Processor(Processor):
                 loss_value.append(loss.item())
                 label_frag.append(label.data.cpu().numpy())
 
-            # Save the inference information to a .csv file for further processing after all inference is finished
-            #self.save_to_csv(path = train_inference_fpath, file_names = sample_name, labels = label, predicted_values = output)
             self.evaluate.inference_full_add_row(file_name = sample_name, label = label, predicted_vals = output)
 
         self.result = np.concatenate(result_frag)
@@ -170,12 +168,6 @@ class REC_Processor(Processor):
         message = "Summarizing inference information"
         print_generic_message(message)
         self.evaluate.summarize_inference_full()
-        #sum_dict = self.get_summarized_dict(path = train_inference_fpath)
-#
-        #inference_summary_fname = "inference_summary.csv"
-        #inference_summary_fpath = os.path.join(summary_path, inference_summary_fname)
-#
-        #self.save_sum_summarised_csv(path = inference_summary_fpath, sum_dict = sum_dict)
 
     def save_sum_summarised_csv(self, path, sum_dict):
         gen_sum_dict = ['Correct', 'Incorrect', 'Sum']
