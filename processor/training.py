@@ -28,7 +28,6 @@ import copy
 from scipy.special import softmax
 from tools.utils.file_util import get_label_text_file, compare_strings, verify_directory
 
-
 def weights_init(m):
     classname = m.__class__.__name__
     if classname.find('Conv1d') != -1:
@@ -51,11 +50,13 @@ class REC_Processor(Processor):
     def load_model(self):
         message = "Loading model"
         print_generic_message(message)
-
+        # Torchlight.io.IO
         self.model = self.io.load_model(self.arg.model,
                                         **(self.arg.model_args))
-        self.model.apply(weights_init)
+        print(self.model)
+        # self.model.apply(self.weights_init)
         self.loss = nn.CrossEntropyLoss()
+
         
     def load_optimizer(self):
         if self.arg.optimizer == 'SGD':
@@ -131,12 +132,6 @@ class REC_Processor(Processor):
         result_frag = []
         label_frag = []
 
-        summary_path = os.path.join(self.arg.work_dir, 'summary')
-        verify_directory(summary_path)
-
-        train_inference_tot_fname = "train_inference.csv"
-        train_inference_fpath = os.path.join(summary_path, train_inference_tot_fname)
-
         for data, label, sample_name in loader:
             # get data
             data = data.float().to(self.dev)
@@ -168,82 +163,6 @@ class REC_Processor(Processor):
         message = "Summarizing inference information"
         print_generic_message(message)
         self.evaluate.summarize_inference_full()
-
-    def save_sum_summarised_csv(self, path, sum_dict):
-        gen_sum_dict = ['Correct', 'Incorrect', 'Sum']
-        df = pd.DataFrame(columns=gen_sum_dict)
-
-        for k, v in sum_dict.items():
-            df.loc[k] = v
-        df.to_csv(path)
-
-    def get_summarized_dict(self, path):
-        summary = pd.read_csv(path)
-
-        # Get the class names from the already summarized file
-        class_name_list = list(summary['Actual Label'].unique())
-        sum_dict = dict.fromkeys(class_name_list, {})
-        gen_sum_dict = {'Correct': 0, 'Incorrect': 0, 'Sum': 0}
-        for k, v in sum_dict.items():
-            sum_dict[k] = copy.deepcopy(gen_sum_dict)
-        
-        for _, row in summary.iterrows():
-            y_pred = row['Predicted Label']
-            y_true = row['Actual Label']
-            file_name = row['File name']            
-            if compare_strings(y_pred, y_true):
-                sum_dict[y_true]['Correct'] += 1
-            else:
-                sum_dict[y_true]['Incorrect'] += 1
-            sum_dict[y_true]['Sum'] += 1  
-
-        return sum_dict
-
-    def save_to_csv(self, path, file_names, labels, predicted_values):
-        df = pd.DataFrame()
-        if os.path.isfile(path):
-            df = pd.read_csv(path)
-        else:
-            df = pd.DataFrame(columns=['File name', 'Actual Label' , 'Predicted Label', 'Predicted Values %'])
-        for i in range(len(file_names)):
-            predicted_values_list = [v.item() for v in predicted_values[i]]
-            preds_perc = self.get_predictions_in_percentage(predicted_values_list)
-            value, key = self.dict_max_value(dic = preds_perc)
-            
-            actual_label = self.get_label_name(labels[i].item())
-
-            new_row = [file_names[i], actual_label, key, preds_perc]
-            df.loc[len(df)] = new_row
-        df.to_csv(path, index=False)
-
-    
-    def get_label_name(self, index):
-        lfile = get_label_text_file()
-        lines = lfile.readlines()
-        try:
-            val = int(index)
-            return lines[val].rstrip()
-        except Exception:
-            print("Got a string instead of an index? \n{}".format(index))
-            return index
-
-    def dict_max_value(self, dic):
-        return max(zip(dic.values(), dic.keys()))
-    
-    def get_predictions_in_percentage(self, li):
-        min_value = np.amin(li)
-        preds_pos = li + (min_value ** 2) # So it is a positive number
-        preds_soft = softmax(preds_pos)
-        top5 = preds_soft.argsort()[-5:][::-1]
-        
-        zipped = {}
-        counter = 0
-        for el in top5:
-            counter += 1
-            label_name = self.get_label_name(index = el)
-            zipped[label_name] = round((preds_soft[el]*100), 3)
-
-        return zipped
 
     @staticmethod
     def get_parser(add_help=False):
