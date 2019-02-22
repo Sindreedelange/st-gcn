@@ -123,10 +123,8 @@ class Processor(IO):
             for epoch in range(self.arg.start_epoch, self.arg.num_epoch):
                 self.meta_info['epoch'] = epoch
                 
-                # Print the progress - number of epochs done / total number of epochs
-                print("Epoch {}/{}".format(self.meta_info['epoch'] + 1, self.arg.num_epoch), end='\r')
                 # training
-                self.io.print_log('Training epoch: {}'.format(epoch))
+                self.io.print_log('Training epoch: {}/{}'.format(epoch, self.arg.num_epoch))
                 self.train()
                 self.io.print_log('Done.')
 
@@ -140,11 +138,11 @@ class Processor(IO):
                 if ((epoch + 1) % self.arg.eval_interval == 0) or (
                         epoch + 1 == self.arg.num_epoch):
                     self.io.print_log('Eval epoch: {}'.format(epoch))
-                    self.test(epoch =  epoch, evaluator = self.evaluate)
+                    self.test(epoch =  epoch + 1, evaluator = self.evaluate)
                     self.io.print_log('Done.')
             
-            print("Epoch {}/{}".format(self.meta_info['epoch'] + 1, self.arg.num_epoch))
-            print("Training done - model saved at {}".format(os.path.join(self.arg.work_dir.split("/")[1], filename)))
+            # self.io.print_log("Epoch {}/{}".format(self.meta_info['epoch'] + 1, self.arg.num_epoch))
+            self.io.print_log("Training done - model saved at {}".format(os.path.join(self.arg.work_dir.split("/")[1], filename)))
         # test phase
         elif self.arg.phase == 'test':
 
