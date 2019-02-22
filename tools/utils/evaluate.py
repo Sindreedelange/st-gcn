@@ -21,7 +21,7 @@ class Evaluate():
         self.confusion_matrix_fpath = os.path.join(self.work_dir_summary, confusion_matrix_fname)
 
         # Remove and initialize files
-        self.remove_old_files()
+        self.init_folders()
         self.inference_full_file, self.inference_summary_file = self.init_sum_files()
 
         # Read the label list file, to minimize io processes 
@@ -48,19 +48,22 @@ class Evaluate():
         inf_sum = pd.DataFrame(columns = inference_summary_columns)  
         return  inf_full, inf_sum
 
-    def remove_old_files(self):
+    def init_folders(self):
         '''
             Remove the two generated files, such that one does not risk poluting new data with old data
         '''
         if os.path.isdir(self.work_dir_summary):
             shutil.rmtree(self.work_dir_summary)
-            os.mkdir(self.work_dir_summary)
+        
+        os.mkdir(self.work_dir_summary)
+        
 
-    def plot_confusion_matrix(self, cm, classes, normalize=False, title='Confusion matrix', cmap=plt.cm.Blues):
+    def plot_confusion_matrix(self, cm, classes, epoch, normalize=False, title='Confusion matrix', cmap=plt.cm.Blues):
         '''
             Prints and plots the confusion matrix.
             Normalization can be applied by setting `normalize=True`.
         '''
+        plt.clf()
         if normalize:
             cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
             print("Normalized confusion matrix")
@@ -86,9 +89,13 @@ class Evaluate():
         plt.ylabel('True label')
         plt.xlabel('Predicted label')
         plt.tight_layout()
-        plt.savefig(self.confusion_matrix_fpath)
 
-    def make_confusion_matrix(self):
+        # One conf matrix pr. saved model
+        _, conf_matrix_name, extension = self.confusion_matrix_fpath.split('.')
+        new_name = '.{}_{}.{}'.format(conf_matrix_name, epoch, extension)
+        plt.savefig(new_name)
+
+    def make_confusion_matrix(self, epoch):
         '''
 
         '''
@@ -104,8 +111,8 @@ class Evaluate():
         
         class_names = self.label_list
 
-        plt.figure()
-        self.plot_confusion_matrix(conf_matrix, classes=class_names)
+        #  plt.figure()
+        self.plot_confusion_matrix(conf_matrix, epoch = epoch, classes=class_names)
 
     def summarize_inference_full(self):
         summarized_dict = self.get_summarized_inference_dict()
@@ -148,7 +155,6 @@ class Evaluate():
             actual_label = self.label_list[label[counter].item()]
 
             new_row = [file_name[counter], actual_label, key, preds_percentages]
-            print("New row: {}".format(new_row))
             self.inference_full_file.loc[len(self.inference_full_file)] = new_row
 
         self.inference_full_file.to_csv(self.inference_full_fpath, index=False)

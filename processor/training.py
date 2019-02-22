@@ -121,7 +121,7 @@ class REC_Processor(Processor):
         self.show_epoch_info()
         self.io.print_timer()
 
-    def test(self, evaluator = None, evaluation=True):
+    def test(self, epoch, evaluator = None, evaluation=True):
         message = "Testing model"
         print_generic_message(message)
 
@@ -147,6 +147,8 @@ class REC_Processor(Processor):
                 label_frag.append(label.data.cpu().numpy())
 
             self.evaluate.inference_full_add_row(file_name = sample_name, label = label, predicted_vals = output)
+        
+        self.evaluate.make_confusion_matrix(epoch = epoch)
 
         self.result = np.concatenate(result_frag)
         if evaluation:
@@ -162,7 +164,6 @@ class REC_Processor(Processor):
         message = "Summarizing inference information"
         print_generic_message(message)
         self.evaluate.summarize_inference_full()
-        self.evaluate.make_confusion_matrix()
 
     @staticmethod
     def get_parser(add_help=False):
