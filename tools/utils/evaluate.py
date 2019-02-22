@@ -143,12 +143,12 @@ class Evaluate():
             # Get the predictions in percentages
             preds_percentages = self.get_predictions_in_percentages(predicted_values_list)
             # Get the predicted label, and its value, by extracting the key with the highest value
-            key, value = dict_max_value(dic = preds_percentages)
+            value, key = dict_max_value(dic = preds_percentages)
             # Easier to understand the class name, than the label index
             actual_label = self.label_list[label[counter].item()]
-            # actual_label = get_class_name_from_index(label[counter].item())
 
             new_row = [file_name[counter], actual_label, key, preds_percentages]
+            print("New row: {}".format(new_row))
             self.inference_full_file.loc[len(self.inference_full_file)] = new_row
 
         self.inference_full_file.to_csv(self.inference_full_fpath, index=False)

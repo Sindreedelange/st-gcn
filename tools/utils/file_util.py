@@ -230,4 +230,4 @@ def dict_max_value(dic):
 
         Returns: Touple (Key, Value)
     '''
-    return max(zip(dic.keys(), dic.values()))
+    return max(zip(dic.values(), dic.keys()))
