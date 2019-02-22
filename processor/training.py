@@ -53,7 +53,6 @@ class REC_Processor(Processor):
         # Torchlight.io.IO
         self.model = self.io.load_model(self.arg.model,
                                         **(self.arg.model_args))
-        print(self.model)
         # self.model.apply(self.weights_init)
         self.loss = nn.CrossEntropyLoss()
 
@@ -163,6 +162,7 @@ class REC_Processor(Processor):
         message = "Summarizing inference information"
         print_generic_message(message)
         self.evaluate.summarize_inference_full()
+        self.evaluate.make_confusion_matrix()
 
     @staticmethod
     def get_parser(add_help=False):
