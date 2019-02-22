@@ -231,25 +231,3 @@ def dict_max_value(dic):
         Returns: Touple (Key, Value)
     '''
     return max(zip(dic.keys(), dic.values()))
-
-def get_class_name_from_index(index):
-    '''
-        Get the corresponding label name, from the inputed index 
-
-        Index: Int (masked as a string, hence the casting)
-
-        Return: String - label name
-    '''
-    label_file = get_label_text_file()
-    lines = label_file.readlines()
-    val = int(index)
-    return lines[val].rstrip()
-
-def get_index_from_class_name(class_name):
-    label_file = get_label_text_file()
-    counter = 0
-    for line in label_file:
-        if compare_strings(line, class_name):
-            return counter
-        else:
-            counter += 1
