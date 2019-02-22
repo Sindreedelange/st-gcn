@@ -54,7 +54,8 @@ class Evaluate():
         '''
         if os.path.isdir(self.work_dir_summary):
             shutil.rmtree(self.work_dir_summary)
-            os.mkdir(self.work_dir_summary)
+        
+        os.mkdir(self.work_dir_summary)
 
     def plot_confusion_matrix(self, cm, classes, normalize=False, title='Confusion matrix', cmap=plt.cm.Blues):
         '''
@@ -148,7 +149,7 @@ class Evaluate():
             actual_label = self.label_list[label[counter].item()]
 
             new_row = [file_name[counter], actual_label, key, preds_percentages]
-            print("New row: {}".format(new_row))
+            
             self.inference_full_file.loc[len(self.inference_full_file)] = new_row
 
         self.inference_full_file.to_csv(self.inference_full_fpath, index=False)
