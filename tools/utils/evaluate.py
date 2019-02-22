@@ -12,11 +12,8 @@ from .number_util import round_traditional
 
 class Evaluate():
 
-    def __init__(self, work_dir, inference_full_name = 'full_inference.csv', inference_summary_name = 'summary_inference.csv', 
-                    confusion_matrix_name = 'conf_matrix.png', score_sum_name = 'score_summary.csv' , summary_folder = "summary"):
+    def __init__(self, work_dir, confusion_matrix_name = 'conf_matrix.png', score_sum_name = 'score_summary.csv' , summary_folder = "summary"):
         self.work_dir_summary = os.path.join(work_dir, summary_folder)
-        self.inference_full_name = inference_full_name
-        self.inference_summary_name = inference_summary_name
         self.confusion_matrix_name = confusion_matrix_name
         self.score_sum_name = score_sum_name
 
@@ -74,12 +71,7 @@ class Evaluate():
         plt.clf()
         if normalize:
             cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-            print("Normalized confusion matrix")
-        else:
-            print('Confusion matrix, without normalization')
-
-        print(cm)
-
+            
         plt.imshow(cm, interpolation='nearest', cmap=cmap)
         # plt.title(title)
         plt.colorbar()
@@ -105,7 +97,7 @@ class Evaluate():
         df = self.get_score_sum_file()
 
         loss = round_traditional(loss, 2)
-        accuracy = '{} %'.format(round_traditional(100 * accuracy, 2))
+        accuracy = round_traditional(100 * accuracy, 2)
 
         row = [loss, accuracy]
         df.loc[len(df)] = row
