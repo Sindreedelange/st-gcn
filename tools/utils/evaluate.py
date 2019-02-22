@@ -6,6 +6,7 @@ import copy
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 import itertools
+import shutil
 from .file_util import dict_max_value, compare_strings, get_label_text_file
 
 class Evaluate():
@@ -51,10 +52,9 @@ class Evaluate():
         '''
             Remove the two generated files, such that one does not risk poluting new data with old data
         '''
-        if os.path.isfile(self.inference_full_fpath):
-            os.remove(self.inference_full_fpath)
-        if os.path.isfile(self.inference_summary_fpath):
-            os.remove(self.inference_summary_fpath)
+        if os.path.isdir(self.work_dir_summary):
+            shutil.rmtree(self.work_dir_summary)
+            os.mkdir(self.work_dir_summary)
 
     def plot_confusion_matrix(self, cm, classes, normalize=False, title='Confusion matrix', cmap=plt.cm.Blues):
         '''
