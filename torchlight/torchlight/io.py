@@ -86,10 +86,12 @@ class IO():
         try:
             model.load_state_dict(model_dict)
         except (KeyError, RuntimeError):
-            state = model.state_dict()
-            diff = list(set(state.keys()).difference(set(pretrained_dict.keys())))
-            for d in diff:
-                self.print_log('Can not find weights [{}].'.format(d))
+            self.print_log('Problems with assigning some of the pretrained weights')
+            self.print_log('Please ignore if new model != old model, e.g. different number of classes')
+            #state = model.state_dict()
+            #diff = list(set(state.keys()).difference(set(pretrained_dict.keys())))
+            #for d in diff:
+            #    self.print_log('Can not find weights [{}].'.format(d))
             #state.update(weights)
             #model.load_state_dict(state)
         return model
