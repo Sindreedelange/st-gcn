@@ -84,10 +84,13 @@ class REC_Processor(Processor):
             self.lr = self.arg.base_lr
 
     def show_topk(self, k):
+        accuracy = self.calculate_accuracy(k)
+        self.io.print_log('\tTop{}: {:.2f}%'.format(k, 100 * accuracy))
+
+    def calculate_accuracy(self, k):
         rank = self.result.argsort()
         hit_top_k = [l in rank[i, -k:] for i, l in enumerate(self.label)]
-        accuracy = sum(hit_top_k) * 1.0 / len(hit_top_k)
-        self.io.print_log('\tTop{}: {:.2f}%'.format(k, 100 * accuracy))
+        return sum(hit_top_k) * 1.0 / len(hit_top_k)
 
     def train(self):
         self.model.train()
@@ -121,7 +124,7 @@ class REC_Processor(Processor):
         self.show_epoch_info()
         self.io.print_timer()
 
-    def test(self, evaluator = None, evaluation=True):
+    def test(self, epoch, evaluator = None, evaluation=True):
         message = "Testing model"
         print_generic_message(message)
 
@@ -130,6 +133,9 @@ class REC_Processor(Processor):
         loss_value = []
         result_frag = []
         label_frag = []
+
+        cur_eval_folder = self.evaluate.get_eval_folder(epoch)
+        inference_full = self.evaluate.get_inference_full_file()
 
         for data, label, sample_name in loader:
             # get data
@@ -146,7 +152,10 @@ class REC_Processor(Processor):
                 loss_value.append(loss.item())
                 label_frag.append(label.data.cpu().numpy())
 
-            self.evaluate.inference_full_add_row(file_name = sample_name, label = label, predicted_vals = output)
+            new_rows = self.evaluate.inference_full_get_row(file_name = sample_name, label = label, predicted_vals = output)
+            for row in new_rows:
+                inference_full.loc[len(inference_full)] = row
+            # self.evaluate.inference_full_add_row(file_name = sample_name, label = label, predicted_vals = output, folder = cur_eval_folder)
 
         self.result = np.concatenate(result_frag)
         if evaluation:
@@ -161,8 +170,14 @@ class REC_Processor(Processor):
         # Process inference information stored during testing and summarize for each class
         message = "Summarizing inference information"
         print_generic_message(message)
-        self.evaluate.summarize_inference_full()
-        self.evaluate.make_confusion_matrix()
+
+        # Currently unnecessary, because it basically gives ut the same information as the Confusion Matrix
+        #self.evaluate.summarize_inference_full(folder = cur_eval_folder, inference_frame = inference_full)
+        self.evaluate.make_confusion_matrix(epoch = epoch, folder = cur_eval_folder, inference_frame = inference_full)
+        self.io.print_log("Confusion Matrix generated")
+        self.evaluate.store_loss_acc(loss = self.epoch_info['mean_loss'], accuracy = self.calculate_accuracy(1), folder = cur_eval_folder)
+        self.io.print_log("Score summary .csv generated")
+
 
     @staticmethod
     def get_parser(add_help=False):

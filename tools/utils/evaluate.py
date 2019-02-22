@@ -8,24 +8,42 @@ import matplotlib.pyplot as plt
 import itertools
 import shutil
 from .file_util import dict_max_value, compare_strings, get_label_text_file
+from .number_util import round_traditional
 
 class Evaluate():
 
-    def __init__(self, work_dir, inference_full_fname = 'full_inference.csv', inference_summary_fname = 'summary_inference.csv', 
-                    confusion_matrix_fname = 'conf_matrix.png', summary_folder = "summary"):
+    def __init__(self, work_dir, confusion_matrix_name = 'conf_matrix.png', score_sum_name = 'score_summary.csv' , summary_folder = "summary"):
         self.work_dir_summary = os.path.join(work_dir, summary_folder)
-        self.inference_full_fname = inference_full_fname
-        self.inference_summary_fname = inference_summary_fname
-        self.inference_full_fpath = os.path.join(self.work_dir_summary, inference_full_fname)
-        self.inference_summary_fpath = os.path.join(self.work_dir_summary, inference_summary_fname)
-        self.confusion_matrix_fpath = os.path.join(self.work_dir_summary, confusion_matrix_fname)
+        self.confusion_matrix_name = confusion_matrix_name
+        self.score_sum_name = score_sum_name
 
         # Remove and initialize files
-        self.remove_old_files()
-        self.inference_full_file, self.inference_summary_file = self.init_sum_files()
+        self.init_folders()
 
         # Read the label list file, to minimize io processes 
         self.label_list = self.init_label_list()
+
+    def get_inference_full_file(self):
+        inference_full_columns = ['File name', 'Actual Label' , 'Predicted Label', 'Predicted Values %']
+        inf_full = pd.DataFrame(columns = inference_full_columns)
+        return inf_full
+
+    def get_inference_summary_file(self):
+        inference_summary_columns = ['Correct', 'Incorrect', 'Sum']
+        inf_sum = pd.DataFrame(columns = inference_summary_columns)  
+        return inf_sum
+
+    def get_score_sum_file(self):
+        score_sum_columns = ['Mean Loss', 'Accuracy']
+        score_sum = pd.DataFrame(columns = score_sum_columns)
+        return score_sum
+    
+    def get_eval_folder(self, epoch):
+        eval_folder = os.path.join(self.work_dir_summary, str(epoch))
+        if os.path.isdir(eval_folder):
+            shutil.rmtree(eval_folder)
+        os.mkdir(eval_folder)
+        return eval_folder
 
     def init_label_list(self):
         '''
@@ -37,39 +55,23 @@ class Evaluate():
             label_text_file.append(line.rstrip())
         return label_text_file
 
-    def init_sum_files(self):
-        '''
-            Initialize the summary files
-        '''
-        inference_full_columns = ['File name', 'Actual Label' , 'Predicted Label', 'Predicted Values %']
-        inference_summary_columns = ['Correct', 'Incorrect', 'Sum']
-
-        inf_full = pd.DataFrame(columns = inference_full_columns)
-        inf_sum = pd.DataFrame(columns = inference_summary_columns)  
-        return  inf_full, inf_sum
-
-    def remove_old_files(self):
+    def init_folders(self):
         '''
             Remove the two generated files, such that one does not risk poluting new data with old data
         '''
         if os.path.isdir(self.work_dir_summary):
-            shutil.rmtree(self.work_dir_summary)
-        
+            shutil.rmtree(self.work_dir_summary)        
         os.mkdir(self.work_dir_summary)
-
-    def plot_confusion_matrix(self, cm, classes, normalize=False, title='Confusion matrix', cmap=plt.cm.Blues):
+    
+    def plot_confusion_matrix(self, cm, classes, epoch, folder, normalize=False, title='Confusion matrix', cmap=plt.cm.Blues):
         '''
             Prints and plots the confusion matrix.
             Normalization can be applied by setting `normalize=True`.
         '''
+        plt.clf()
         if normalize:
             cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-            print("Normalized confusion matrix")
-        else:
-            print('Confusion matrix, without normalization')
-
-        print(cm)
-
+            
         plt.imshow(cm, interpolation='nearest', cmap=cmap)
         # plt.title(title)
         plt.colorbar()
@@ -87,14 +89,27 @@ class Evaluate():
         plt.ylabel('True label')
         plt.xlabel('Predicted label')
         plt.tight_layout()
-        plt.savefig(self.confusion_matrix_fpath)
 
-    def make_confusion_matrix(self):
+        # One conf matrix pr. saved model
+        plt.savefig(os.path.join(folder, self.confusion_matrix_name))
+
+    def store_loss_acc(self, loss, accuracy, folder):
+        df = self.get_score_sum_file()
+
+        loss = round_traditional(loss, 2)
+        accuracy = round_traditional(100 * accuracy, 2)
+
+        row = [loss, accuracy]
+        df.loc[len(df)] = row
+
+        df.to_csv(os.path.join(folder, self.score_sum_name), index=False)
+
+    def make_confusion_matrix(self, epoch, folder, inference_frame):
         '''
 
         '''
-        y_true = list(self.inference_full_file['Actual Label'])
-        y_pred = list(self.inference_full_file['Predicted Label'])
+        y_true = list(inference_frame['Actual Label'])
+        y_pred = list(inference_frame['Predicted Label'])
 
         # Need the index of the labels for the confusion matrix
         for counter, _ in enumerate(y_true):
@@ -105,39 +120,14 @@ class Evaluate():
         
         class_names = self.label_list
 
-        plt.figure()
-        self.plot_confusion_matrix(conf_matrix, classes=class_names)
+        #  plt.figure()
+        self.plot_confusion_matrix(conf_matrix, epoch = epoch, classes=class_names, folder = folder)
 
-    def summarize_inference_full(self):
-        summarized_dict = self.get_summarized_inference_dict()
-        for k, v in summarized_dict.items():
-            self.inference_summary_file.loc[k] = v
-        self.inference_summary_file.to_csv(self.inference_summary_fpath)
-        
-    def get_summarized_inference_dict(self):
-        class_name_list_unique = list(self.inference_full_file['Actual Label'].unique())
-        sum_dict = dict.fromkeys(class_name_list_unique, {})
-
-        gen_sum_dict = {'Correct': 0, 'Incorrect': 0, 'Sum': 0}
-
-        for k, v in sum_dict.items():
-            sum_dict[k] = copy.deepcopy(gen_sum_dict)
-        
-        for _, row in self.inference_full_file.iterrows():
-            file_name = row['File name']
-            y_true = row['Actual Label']
-            y_pred = row['Predicted Label']
-            if compare_strings(y_pred, y_true):
-                sum_dict[y_true]['Correct'] += 1
-            else:
-                sum_dict[y_true]['Incorrect'] += 1
-            sum_dict[y_true]['Sum'] += 1
-        return sum_dict
-
-    def inference_full_add_row(self, file_name, label, predicted_vals):
+    def inference_full_get_row(self, file_name, label, predicted_vals):
         '''
            Add a row to the 'full summary' (.csv) file 
         '''
+        new_rows = []
         for counter, _ in enumerate(file_name):
             # Unpack the inputed values (Tensor) to a list
             predicted_values_list = [v.item() for v in predicted_vals[counter]]
@@ -149,10 +139,10 @@ class Evaluate():
             actual_label = self.label_list[label[counter].item()]
 
             new_row = [file_name[counter], actual_label, key, preds_percentages]
-            
-            self.inference_full_file.loc[len(self.inference_full_file)] = new_row
-
-        self.inference_full_file.to_csv(self.inference_full_fpath, index=False)
+            new_rows.append(new_row)
+            #self.inference_full_file.loc[len(self.inference_full_file)] = new_row
+        return new_rows
+        #self.inference_full_file.to_csv(os.path.join(folder, self.inference_full_name), index=False)
 
     def get_predictions_in_percentages(self, li):
         min_value = np.amin(li)
@@ -169,3 +159,32 @@ class Evaluate():
             zipped[label_name] = round((preds_soft[el]*100), 3)
 
         return zipped
+ 
+ # Currently unnecessary, because it basically gives ut the same information as the Confusion Matrix
+#----------------------------------------------------------------------------------------------------------------------
+    def summarize_inference_full(self, folder, inference_frame):
+        summarized_dict = self.get_summarized_inference_dict(inference_frame)
+        for k, v in summarized_dict.items():
+            self.inference_summary_file.loc[k] = v
+        self.inference_summary_file.to_csv(os.path.join(folder, self.inference_summary_name))
+        
+
+    def get_summarized_inference_dict(self, inf_frame):
+        class_name_list_unique = list(inf_frame['Actual Label'].unique())
+        sum_dict = dict.fromkeys(class_name_list_unique, {})
+
+        gen_sum_dict = {'Correct': 0, 'Incorrect': 0, 'Sum': 0}
+
+        for k, v in sum_dict.items():
+            sum_dict[k] = copy.deepcopy(gen_sum_dict)
+        
+        for _, row in inf_frame.iterrows():
+            file_name = row['File name']
+            y_true = row['Actual Label']
+            y_pred = row['Predicted Label']
+            if compare_strings(y_pred, y_true):
+                sum_dict[y_true]['Correct'] += 1
+            else:
+                sum_dict[y_true]['Incorrect'] += 1
+            sum_dict[y_true]['Sum'] += 1
+        return sum_dict

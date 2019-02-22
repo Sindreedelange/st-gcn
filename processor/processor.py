@@ -140,7 +140,7 @@ class Processor(IO):
                 if ((epoch + 1) % self.arg.eval_interval == 0) or (
                         epoch + 1 == self.arg.num_epoch):
                     self.io.print_log('Eval epoch: {}'.format(epoch))
-                    self.test(evaluator = self.evaluate)
+                    self.test(epoch =  epoch, evaluator = self.evaluate)
                     self.io.print_log('Done.')
             
             print("Epoch {}/{}".format(self.meta_info['epoch'] + 1, self.arg.num_epoch))
