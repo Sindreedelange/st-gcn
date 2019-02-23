@@ -172,7 +172,7 @@ class REC_Processor(Processor):
         print_generic_message(message)
 
         # Currently unnecessary, because it basically gives ut the same information as the Confusion Matrix
-        #self.evaluate.summarize_inference_full(folder = cur_eval_folder, inference_frame = inference_full)
+        self.evaluate.summarize_inference_full(folder = cur_eval_folder, inference_frame = inference_full)
         self.evaluate.make_confusion_matrix(epoch = epoch, folder = cur_eval_folder, inference_frame = inference_full)
         self.io.print_log("Confusion Matrix generated")
         self.evaluate.store_loss_acc(loss = self.epoch_info['mean_loss'], accuracy = self.calculate_accuracy(1), folder = cur_eval_folder)
