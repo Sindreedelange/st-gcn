@@ -1,4 +1,4 @@
-work_dir: /data2/robot/
+work_dir: /data2/robot
 
 # feeder
 feeder: feeder.feeder.Feeder
@@ -30,7 +30,7 @@ test_batch_size: 256
 #optim
 base_lr: 0.1
 step: [20, 30, 40, 50]
-num_epoch: 150
+num_epoch: 50
 
 
 
