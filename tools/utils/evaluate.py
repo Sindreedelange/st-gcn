@@ -12,7 +12,13 @@ from .number_util import round_traditional
 
 class Evaluate():
 
-    def __init__(self, work_dir, confusion_matrix_name = 'conf_matrix.png', score_sum_name = 'score_summary.csv' , summary_folder = "summary"):
+    def __init__(self, 
+                    work_dir, 
+                    inference_summary_name = 'inference_sum.csv', 
+                    confusion_matrix_name = 'conf_matrix.png', 
+                    score_sum_name = 'score_summary.csv' , 
+                    summary_folder = "summary"):
+        self.inference_summary_name = inference_summary_name
         self.work_dir_summary = os.path.join(work_dir, summary_folder)
         self.confusion_matrix_name = confusion_matrix_name
         self.score_sum_name = score_sum_name
@@ -71,7 +77,7 @@ class Evaluate():
         plt.clf()
         if normalize:
             cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-            
+
         plt.imshow(cm, interpolation='nearest', cmap=cmap)
         # plt.title(title)
         plt.colorbar()
@@ -119,8 +125,6 @@ class Evaluate():
         conf_matrix = confusion_matrix(y_true, y_pred)
         
         class_names = self.label_list
-
-        #  plt.figure()
         self.plot_confusion_matrix(conf_matrix, epoch = epoch, classes=class_names, folder = folder)
 
     def inference_full_get_row(self, file_name, label, predicted_vals):
@@ -160,15 +164,15 @@ class Evaluate():
 
         return zipped
  
- # Currently unnecessary, because it basically gives ut the same information as the Confusion Matrix
-#----------------------------------------------------------------------------------------------------------------------
     def summarize_inference_full(self, folder, inference_frame):
-        summarized_dict = self.get_summarized_inference_dict(inference_frame)
-        for k, v in summarized_dict.items():
-            self.inference_summary_file.loc[k] = v
-        self.inference_summary_file.to_csv(os.path.join(folder, self.inference_summary_name))
-        
+        #summarized_dict = self.get_summarized_inference_dict(inference_frame)
+        #for k, v in summarized_dict.items():
+        #    self.inference_summary_file.loc[k] = v
+        inference_frame.to_csv(os.path.join(folder, self.inference_summary_name), index=False)
 
+
+# Currently not used
+# ----------------------------------------------------------------------------------
     def get_summarized_inference_dict(self, inf_frame):
         class_name_list_unique = list(inf_frame['Actual Label'].unique())
         sum_dict = dict.fromkeys(class_name_list_unique, {})
