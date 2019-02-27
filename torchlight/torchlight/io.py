@@ -19,6 +19,11 @@ with warnings.catch_warnings():
     warnings.filterwarnings("ignore",category=FutureWarning)
     import h5py
 
+def print_parameters(m):
+    for name, param in m.named_parameters():
+        print(name, param.requires_grad)
+
+
 class IO():
     def __init__(self, work_dir, save_log=True, print_log=True):
         self.work_dir = work_dir
@@ -94,6 +99,17 @@ class IO():
             #    self.print_log('Can not find weights [{}].'.format(d))
             #state.update(weights)
             #model.load_state_dict(state)
+        child_counter = 0
+        for child in model.children():
+            if child_counter < 3:
+                print("child ",child_counter," was frozen")
+                for param in child.parameters():
+                    param.requires_grad = False
+            else:
+                print("child ",child_counter," was not frozen")
+            
+            child_counter += 1
+        model.apply(print_parameters)
         return model
 
     def save_pkl(self, result, filename):
