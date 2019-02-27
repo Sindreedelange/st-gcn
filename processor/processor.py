@@ -22,6 +22,10 @@ from .io import IO
 from tools.views.output_messages import print_generic_message
 from tools.utils.evaluate import Evaluate
 
+def print_parameters(m):
+    for name, param in m.named_parameters():
+        print(name, param.requires_grad)
+
 
 class Processor(IO):
     """
@@ -46,12 +50,13 @@ class Processor(IO):
         self.iter_info = dict()
         self.epoch_info = dict()
         self.meta_info = dict(epoch=0, iter=0)
+        self.frozen = self.arg.freeze
 
     def load_evaluator(self):
         self.evaluate = Evaluate(work_dir = self.arg.work_dir)
 
     def load_optimizer(self):
-        pass
+        self.optimizer = self.arg.optimizer
 
     def load_data(self):
         Feeder = import_class(self.arg.feeder)
@@ -140,7 +145,15 @@ class Processor(IO):
                     self.io.print_log('Eval epoch: {}'.format(epoch))
                     self.test(epoch =  epoch + 1, evaluator = self.evaluate)
                     self.io.print_log('Done.')
-            
+
+                if self.frozen and ((epoch + 1) >= (self.arg.num_epoch - (self.arg.num_epoch/10))):
+                    self.frozen = False
+                    for child in self.model.children():
+                        for param in child.parameters():
+                            if param.requires_grad is False:
+                                param.requires_grad = True
+                    # self.model.apply(print_parameters)
+                        
             # self.io.print_log("Epoch {}/{}".format(self.meta_info['epoch'] + 1, self.arg.num_epoch))
             self.io.print_log("Training done - model saved at {}".format(os.path.join(self.arg.work_dir.split("/")[1], filename)))
         # test phase
@@ -204,6 +217,7 @@ class Processor(IO):
         parser.add_argument('--model_args', action=DictAction, default=dict(), help='the arguments of model')
         parser.add_argument('--weights', default='models/kinetics-st_gcn.pt', help='the weights for network initialization')
         parser.add_argument('--ignore_weights', type=str, default=[], nargs='+', help='the name of weights which will be ignored in the initialization')
+        parser.add_argument('--freeze', type=str2bool, default=True, help='Freeze every layer but the last ones')
         #endregion yapf: enable
 
         return parser
