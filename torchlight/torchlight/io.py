@@ -102,14 +102,14 @@ class IO():
         child_counter = 0
         for child in model.children():
             if child_counter < 3:
-                print("child ",child_counter," was frozen")
+                self.print_log("child {} was frozen".format(child_counter))
                 for param in child.parameters():
                     param.requires_grad = False
             else:
-                print("child ",child_counter," was not frozen")
+                self.print_log("child {} was not frozen".format(child_counter))
             
             child_counter += 1
-        model.apply(print_parameters)
+        #model.apply(print_parameters)
         return model
 
     def save_pkl(self, result, filename):
