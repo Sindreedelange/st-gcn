@@ -93,12 +93,12 @@ class IO():
         except (KeyError, RuntimeError):
             self.print_log('Problems with assigning some of the pretrained weights')
             self.print_log('Please ignore if new model != old model, e.g. different number of classes')
-            #state = model.state_dict()
-            #diff = list(set(state.keys()).difference(set(pretrained_dict.keys())))
-            #for d in diff:
-            #    self.print_log('Can not find weights [{}].'.format(d))
-            #state.update(weights)
-            #model.load_state_dict(state)
+            state = model.state_dict()
+            diff = list(set(state.keys()).difference(set(pretrained_dict.keys())))
+            self.print_log("Diff; {}".format(diff))
+            for d in diff:
+                self.print_log('Can not find weights [{}].'.format(d))
+                
         child_counter = 0
         for child in model.children():
             if child_counter < 3:
@@ -109,7 +109,7 @@ class IO():
                 self.print_log("child {} was not frozen".format(child_counter))
             
             child_counter += 1
-        #model.apply(print_parameters)
+        # model.apply(print_parameters)
         return model
 
     def save_pkl(self, result, filename):
