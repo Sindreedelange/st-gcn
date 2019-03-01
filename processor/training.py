@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# pylint: disable=W0201
 import sys
 import argparse
 import yaml
@@ -42,6 +40,10 @@ def weights_init(m):
         m.weight.data.normal_(1.0, 0.02)
         m.bias.data.fill_(0)
 
+def print_parameters(m):
+    for name, param in m.named_parameters():
+        print(name, param.requires_grad)
+
 class REC_Processor(Processor):
     """
         Processor for Skeleton-based Action Recgnition
@@ -55,33 +57,44 @@ class REC_Processor(Processor):
                                         **(self.arg.model_args))
         # self.model.apply(self.weights_init)
         self.loss = nn.CrossEntropyLoss()
-
         
     def load_optimizer(self):
         if self.arg.optimizer == 'SGD':
             self.optimizer = optim.SGD(
                 self.model.parameters(),
-                lr=self.arg.base_lr,
+                lr=self.lr,
                 momentum=0.9,
                 nesterov=self.arg.nesterov,
                 weight_decay=self.arg.weight_decay)
         elif self.arg.optimizer == 'Adam':
             self.optimizer = optim.Adam(
                 self.model.parameters(),
-                lr=self.arg.base_lr,
+                lr=self.lr,
                 weight_decay=self.arg.weight_decay)
         else:
             raise ValueError()
-
-    def adjust_lr(self):
-        if self.arg.optimizer == 'SGD' and self.arg.step:
-            lr = self.arg.base_lr * (
-                0.1**np.sum(self.meta_info['epoch']>= np.array(self.arg.step)))
-            for param_group in self.optimizer.param_groups:
-                param_group['lr'] = lr
+    
+    def update_lr(self, lr):
+        for param_group in self.optimizer.param_groups:
+            param_group['lr'] = lr
+        if self.lr >= lr:
             self.lr = lr
         else:
-            self.lr = self.arg.base_lr
+            self.io.print_log("New learning rate > old learning rate - disregarding")
+
+    def adjust_lr(self, specific_adjustment = None):
+        lr = 0
+        if specific_adjustment is None:
+            if self.arg.optimizer == 'SGD' and self.arg.step:
+                lr = self.arg.base_lr * (
+                    0.1**np.sum(self.meta_info['epoch']>= np.array(self.arg.step)))
+            else:
+                lr = self.arg.base_lr
+        else:
+            lr = self.lr * specific_adjustment
+
+        self.update_lr(lr)
+
 
     def show_topk(self, k):
         accuracy = self.calculate_accuracy(k)
@@ -91,6 +104,14 @@ class REC_Processor(Processor):
         rank = self.result.argsort()
         hit_top_k = [l in rank[i, -k:] for i, l in enumerate(self.label)]
         return sum(hit_top_k) * 1.0 / len(hit_top_k)
+
+    def unfreeze_all(self):
+        for child in self.model.children():
+            for param in child.parameters():
+                if param.requires_grad is False:
+                        param.requires_grad = True
+        self.adjust_lr(specific_adjustment=0.5)
+        # self.model.apply(print_parameters) # for verifying that the layers are unfreezed by printing each layers' 'requires_grad' value           
 
     def train(self):
         self.model.train()
@@ -119,6 +140,8 @@ class REC_Processor(Processor):
             loss_value.append(self.iter_info['loss'])
             self.show_iter_info()
             self.meta_info['iter'] += 1
+        
+        #print("-------------------------- \n \n After for loop loader lr: \n {} \n \n \n -------------------------".format(self.lr))
 
         self.epoch_info['mean_loss']= np.mean(loss_value)
         self.show_epoch_info()

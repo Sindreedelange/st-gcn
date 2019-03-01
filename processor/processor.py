@@ -22,11 +22,6 @@ from .io import IO
 from tools.views.output_messages import print_generic_message
 from tools.utils.evaluate import Evaluate
 
-def print_parameters(m):
-    for name, param in m.named_parameters():
-        print(name, param.requires_grad)
-
-
 class Processor(IO):
     """
         Base Processor
@@ -51,6 +46,7 @@ class Processor(IO):
         self.epoch_info = dict()
         self.meta_info = dict(epoch=0, iter=0)
         self.frozen = self.arg.freeze
+        self.lr = self.arg.base_lr
 
     def load_evaluator(self):
         self.evaluate = Evaluate(work_dir = self.arg.work_dir)
@@ -127,6 +123,12 @@ class Processor(IO):
 
             for epoch in range(self.arg.start_epoch, self.arg.num_epoch):
                 self.meta_info['epoch'] = epoch
+
+                # Unfreeze layers (and decrease the learning rate)
+                if self.frozen and ((epoch + 1) >= (self.arg.num_epoch - (self.arg.num_epoch/10))):
+                    self.io.print_log("Unfreezing")
+                    self.frozen = False
+                    self.unfreeze_all()
                 
                 # training
                 self.io.print_log('Training epoch: {}/{}'.format(epoch, self.arg.num_epoch))
@@ -142,17 +144,10 @@ class Processor(IO):
                 # evaluation
                 if ((epoch + 1) % self.arg.eval_interval == 0) or (
                         epoch + 1 == self.arg.num_epoch):
-                    self.io.print_log('Eval epoch: {}'.format(epoch))
+                    self.io.print_log('Eval epoch: {}'.format(epoch + 1))
                     self.test(epoch =  epoch + 1, evaluator = self.evaluate)
                     self.io.print_log('Done.')
-
-                if self.frozen and ((epoch + 1) >= (self.arg.num_epoch - (self.arg.num_epoch/10))):
-                    self.frozen = False
-                    for child in self.model.children():
-                        for param in child.parameters():
-                            if param.requires_grad is False:
-                                param.requires_grad = True
-                    # self.model.apply(print_parameters)
+ 
                         
             # self.io.print_log("Epoch {}/{}".format(self.meta_info['epoch'] + 1, self.arg.num_epoch))
             self.io.print_log("Training done - model saved at {}".format(os.path.join(self.arg.work_dir.split("/")[1], filename)))
