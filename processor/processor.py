@@ -125,7 +125,7 @@ class Processor(IO):
                 self.meta_info['epoch'] = epoch
 
                 # Unfreeze layers (and decrease the learning rate)
-                if self.frozen and ((epoch + 1) >= (self.arg.num_epoch * 0.7)):
+                if self.frozen and ((epoch + 1) >= (self.arg.num_epoch/10)):
                     self.io.print_log("Unfreezing")
                     self.frozen = False
                     self.unfreeze_all()
