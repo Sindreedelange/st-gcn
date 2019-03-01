@@ -61,7 +61,7 @@ class REC_Processor(Processor):
     def load_optimizer(self):
         if self.arg.optimizer == 'SGD':
             self.optimizer = optim.SGD(
-                self.model.parameters(),
+                filter(lambda p: p.requires_grad, self.model.parameters()),
                 lr=self.lr,
                 momentum=0.9,
                 nesterov=self.arg.nesterov,
@@ -111,6 +111,7 @@ class REC_Processor(Processor):
                 if param.requires_grad is False:
                         param.requires_grad = True
         self.adjust_lr(specific_adjustment=0.5)
+        self.load_optimizer()
         # self.model.apply(print_parameters) # for verifying that the layers are unfreezed by printing each layers' 'requires_grad' value           
 
     def train(self):
