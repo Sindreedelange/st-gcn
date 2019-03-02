@@ -71,7 +71,7 @@ class IO():
 
     def load_weights(self):
         if self.arg.weights:
-            self.model = self.io.load_weights(self.model, self.arg.weights,
+            self.model = self.io.load_weights(self.model, self.arg.weights, self.arg.freeze,
                                               self.arg.ignore_weights)
 
     def gpu(self):
