@@ -95,11 +95,11 @@ class IO():
             self.print_log('Please ignore if new model != old model, e.g. different number of classes')
             state = model.state_dict()
             diff = list(set(state.keys()).difference(set(pretrained_dict.keys())))
-            self.print_log("Diff; {}".format(diff))
-            for d in diff:
-                self.print_log('Can not find weights [{}].'.format(d))
+            #for d in diff:
+            #    self.print_log('Can not find weights [{}].'.format(d))
 
         if freeze:
+            self.print_log("Freezing all layers up to two lasts")
             child_counter = 0
             for child in model.children():
                 if child_counter < 3:
@@ -111,6 +111,8 @@ class IO():
 
                 child_counter += 1
             # model.apply(print_parameters)
+        else:
+            self.print_log("Not freezing any layers")
         return model
 
     def save_pkl(self, result, filename):
