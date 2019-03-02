@@ -112,9 +112,31 @@ class Processor(IO):
         self.epoch_info['mean loss'] = 1
         self.show_epoch_info()
 
+    def store_eval_results(self, epoch, train_loss, val_loss, val_accuracy, inference_rows):
+        cur_eval_folder = self.evaluate.get_eval_folder(epoch)
+        inference_full = self.evaluate.get_inference_full_file()
+
+        message = "Summarizing inference information"
+        print_generic_message(message)
+
+        for rows in inference_rows:
+            for row in rows:
+                inference_full.loc[len(inference_full)] = row
+
+        # Currently unnecessary, because it basically gives ut the same information as the Confusion Matrix
+        self.evaluate.summarize_inference_full(folder = cur_eval_folder, inference_frame = inference_full)
+
+        self.evaluate.make_confusion_matrix(epoch = epoch, folder = cur_eval_folder, inference_frame = inference_full)
+        self.io.print_log("Confusion Matrix generated")
+
+        self.evaluate.store_loss_acc(train_loss = train_loss, val_loss = val_loss, accuracy = val_accuracy, folder = cur_eval_folder)
+        self.io.print_log("Score summary .csv generated")
+
     def start(self):
         self.load_evaluator()
         self.io.print_log('Parameters:\n{}\n'.format(str(vars(self.arg))))
+
+        self.train_result_loss = list()
 
         # training phase
         if self.arg.phase == 'train':
@@ -123,7 +145,7 @@ class Processor(IO):
 
             for epoch in range(self.arg.start_epoch, self.arg.num_epoch):
                 self.meta_info['epoch'] = epoch
-
+    
                 # Unfreeze layers (and decrease the learning rate)
                 if self.frozen and ((epoch + 1) >= (self.arg.num_epoch/10)):
                     self.io.print_log("Unfreezing")
@@ -132,7 +154,8 @@ class Processor(IO):
                 
                 # training
                 self.io.print_log('Training epoch: {}/{}'.format(epoch, self.arg.num_epoch))
-                self.train()
+                loss_epoch_mean = self.train()
+                self.train_result_loss.append(loss_epoch_mean)
                 self.io.print_log('Done.')
 
                 # save model
@@ -145,7 +168,20 @@ class Processor(IO):
                 if ((epoch + 1) % self.arg.eval_interval == 0) or (
                         epoch + 1 == self.arg.num_epoch):
                     self.io.print_log('Eval epoch: {}'.format(epoch + 1))
-                    self.test(epoch =  epoch + 1, evaluator = self.evaluate)
+
+                    val_accuracy, val_loss, inference_rows = self.test(epoch =  epoch + 1, evaluator = self.evaluate)
+
+                    # Calculating mean loss over the eval interval
+                    eval_interval_mean_loss = np.mean(self.train_result_loss)
+                    # Clearing the list for calculating the mean over the next interval
+                    self.train_result_loss.clear()
+
+                    self.store_eval_results(epoch = epoch + 1, 
+                                            train_loss = eval_interval_mean_loss, 
+                                            val_loss = val_loss, 
+                                            val_accuracy = val_accuracy,
+                                            inference_rows = inference_rows)
+
                     self.io.print_log('Done.')
  
                         

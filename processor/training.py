@@ -141,12 +141,12 @@ class REC_Processor(Processor):
             loss_value.append(self.iter_info['loss'])
             self.show_iter_info()
             self.meta_info['iter'] += 1
-        
-        #print("-------------------------- \n \n After for loop loader lr: \n {} \n \n \n -------------------------".format(self.lr))
 
         self.epoch_info['mean_loss']= np.mean(loss_value)
         self.show_epoch_info()
         self.io.print_timer()
+
+        return np.mean(loss_value)
 
     def test(self, epoch, evaluator = None, evaluation=True):
         message = "Testing model"
@@ -160,6 +160,8 @@ class REC_Processor(Processor):
 
         cur_eval_folder = self.evaluate.get_eval_folder(epoch)
         inference_full = self.evaluate.get_inference_full_file()
+
+        new_rows = list()
 
         for data, label, sample_name in loader:
             # get data
@@ -176,10 +178,10 @@ class REC_Processor(Processor):
                 loss_value.append(loss.item())
                 label_frag.append(label.data.cpu().numpy())
 
-            new_rows = self.evaluate.inference_full_get_row(file_name = sample_name, label = label, predicted_vals = output)
-            for row in new_rows:
-                inference_full.loc[len(inference_full)] = row
-            # self.evaluate.inference_full_add_row(file_name = sample_name, label = label, predicted_vals = output, folder = cur_eval_folder)
+            
+
+            new_row = self.evaluate.inference_full_get_row(file_name = sample_name, label = label, predicted_vals = output)
+            new_rows.append(new_row)
 
         self.result = np.concatenate(result_frag)
         if evaluation:
@@ -191,16 +193,8 @@ class REC_Processor(Processor):
             for k in self.arg.show_topk:
                 self.show_topk(k)
 
-        # Process inference information stored during testing and summarize for each class
-        message = "Summarizing inference information"
-        print_generic_message(message)
+        return self.calculate_accuracy(1), self.epoch_info['mean_loss'], new_rows
 
-        # Currently unnecessary, because it basically gives ut the same information as the Confusion Matrix
-        self.evaluate.summarize_inference_full(folder = cur_eval_folder, inference_frame = inference_full)
-        self.evaluate.make_confusion_matrix(epoch = epoch, folder = cur_eval_folder, inference_frame = inference_full)
-        self.io.print_log("Confusion Matrix generated")
-        self.evaluate.store_loss_acc(loss = self.epoch_info['mean_loss'], accuracy = self.calculate_accuracy(1), folder = cur_eval_folder)
-        self.io.print_log("Score summary .csv generated")
 
 
     @staticmethod

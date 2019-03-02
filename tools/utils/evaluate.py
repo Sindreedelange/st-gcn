@@ -40,7 +40,7 @@ class Evaluate():
         return inf_sum
 
     def get_score_sum_file(self):
-        score_sum_columns = ['Mean Loss', 'Accuracy']
+        score_sum_columns = ['Train Loss', 'Val Loss', 'Accuracy']
         score_sum = pd.DataFrame(columns = score_sum_columns)
         return score_sum
     
@@ -99,13 +99,14 @@ class Evaluate():
         # One conf matrix pr. saved model
         plt.savefig(os.path.join(folder, self.confusion_matrix_name))
 
-    def store_loss_acc(self, loss, accuracy, folder):
+    def store_loss_acc(self, train_loss, val_loss, accuracy, folder):
         df = self.get_score_sum_file()
 
-        loss = round_traditional(loss, 2)
-        accuracy = round_traditional(100 * accuracy, 2)
+        train_loss = round_traditional(train_loss, 2)
+        val_loss = round_traditional(val_loss, 2)
 
-        row = [loss, accuracy]
+        accuracy = round_traditional(100 * accuracy, 2)
+        row = [train_loss, val_loss, accuracy]
         df.loc[len(df)] = row
 
         df.to_csv(os.path.join(folder, self.score_sum_name), index=False)

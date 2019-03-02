@@ -61,7 +61,7 @@ class IO():
         self.model_text += '\n\n' + str(model)
         return model
 
-    def load_weights(self, model, weights_path, ignore_weights=None):
+    def load_weights(self, model, weights_path, freeze, ignore_weights=None):
         if ignore_weights is None:
             ignore_weights = []
         if isinstance(ignore_weights, str):
@@ -98,18 +98,19 @@ class IO():
             self.print_log("Diff; {}".format(diff))
             for d in diff:
                 self.print_log('Can not find weights [{}].'.format(d))
-                
-        child_counter = 0
-        for child in model.children():
-            if child_counter < 3:
-                self.print_log("child {} was frozen".format(child_counter))
-                for param in child.parameters():
-                    param.requires_grad = False
-            else:
-                self.print_log("child {} was not frozen".format(child_counter))
-            
-            child_counter += 1
-        # model.apply(print_parameters)
+
+        if freeze:
+            child_counter = 0
+            for child in model.children():
+                if child_counter < 3:
+                    self.print_log("child {} was frozen".format(child_counter))
+                    for param in child.parameters():
+                        param.requires_grad = False
+                else:
+                    self.print_log("child {} was not frozen".format(child_counter))
+
+                child_counter += 1
+            # model.apply(print_parameters)
         return model
 
     def save_pkl(self, result, filename):
