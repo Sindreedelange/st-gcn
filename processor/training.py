@@ -141,8 +141,6 @@ class REC_Processor(Processor):
             loss_value.append(self.iter_info['loss'])
             self.show_iter_info()
             self.meta_info['iter'] += 1
-        
-        #print("-------------------------- \n \n After for loop loader lr: \n {} \n \n \n -------------------------".format(self.lr))
 
         self.epoch_info['mean_loss']= np.mean(loss_value)
         self.show_epoch_info()
