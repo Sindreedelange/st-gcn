@@ -106,8 +106,12 @@ class openpose():
 
             Return: Boolean - Whether or not the video was ran through openpose, successfully, or if it froze, such that the program had to be terminated
         '''
-        cmd = (self.openpose_bin_path + " --video " + input_f_path + " --model_folder " + self.model_folder + " --write_json " + output_f_path + " --model_pose COCO --keypoint_scale 3")        
+        #cmd = (self.openpose_bin_path + " --video " + input_f_path + " --model_folder " + self.model_folder + " --write_json " + output_f_path + " --model_pose COCO --keypoint_scale 3")        
+        
+        cmd = ('python tf-pose-estimation/run_video.py --video ' + input_f_path + ' --output_json ' + output_f_path)
+        
         parent = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
 
         # Wait until process is finished - not relevant anymore because the program needs to keep running in order to stop Openpose, if it freezes
         # p.wait()
