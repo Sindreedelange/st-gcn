@@ -118,7 +118,7 @@ class openpose():
 
         # Problems with openpose freezing after x number of videos, so to combat this: 
             # Stop the process after y seconds, and try again 
-        timeout_limit = 45
+        timeout_limit = 20
         successfull = True
         for _ in range(timeout_limit):
             time.sleep(1)
@@ -219,7 +219,7 @@ class openpose():
 
         return ratio < train_val_ratio 
 
-    def openpose_skeleton_to_stgcn(self, train_val_ratio = 0.9, frame_limit = 300):
+    def openpose_skeleton_to_stgcn(self, train_or_val, frame_limit = 300):
         '''
             "Translate" openpose skeletonfiles to one single skeletonfile which st-gcn accepts as input, for either training or validating
 
@@ -256,7 +256,7 @@ class openpose():
             # True if the data should be part of the training set, False if it should be part of the validation set
             train = self.train_or_val(test_val_ratio_dict, label, train_val_ratio)
 
-            if train:
+            if train_or_val == 'train':
                 old_dictionary = self.data_json_description_train
                 old_dictionary_path = self.data_json_description_train_path
                 current_train_val_folder = self.data_json_skeleton_train

@@ -9,6 +9,7 @@ import os
 import subprocess
 from .file_util import *
 from tools.views.output_messages import *
+import pickle
 
 
 class youtube():
@@ -19,7 +20,7 @@ class youtube():
     def __init__ (self,
                 csv_path,
                 data_path,
-                data_augmentation=True,):
+                data_augmentation=True):
         '''
             csv_path: String - path to csv file used to download Youtube videos (max 10 seconds)
                 url: String - Full URL to Youtube video
@@ -33,7 +34,7 @@ class youtube():
         self.csv_path = csv_path
         self.data_augmentation = data_augmentation
 
-        self.data_youtube_folder = "{}/youtube".format(data_path)
+        self.data_youtube_folder = "{}/original_data".format(data_path)
 
         self.data_videos_download = "{}/videos".format(self.data_youtube_folder)
         self.data_videos_clean = "{}/videos_clean".format(self.data_youtube_folder)
@@ -62,25 +63,29 @@ class youtube():
             print("Error message: {}".format(e))
             sys.exit(1)
 
-        urls = videos.values
+        videos = videos.values
 
         num_videos = len(videos)
         counter = 0
 
+        list_unsuccessfull_vids_downloaded = []
+
         # Refactor to separate method?
-        for video in urls:
+        for video in videos:
             counter += 1
             print("File {}/{}".format(counter, num_videos), end='\r')
             
             # Remember: [url, start, stop, label]
-            url = video[0]
-            label = video[3]
+            label = video[0]
+            extension = video[1]
+
+            full_link = 'https://www.youtube.com/watch?v={}'.format(extension)
 
             # Name the files " 'youtube extension'-'label name'.avi (switched from mp4 because of codec problems) "
             try:
-                video_name = url.split("=")[1] + "---" + label + ".mp4"
+                video_name = extension + "---" + label + ".mp4"
             except Exception:
-                print("Unable to extract video name (aka.splitting on '=') from url: {}\nMoving on to next file".format(url))
+                print("Unable to extract video name (aka.splitting on '=') from url: {}\nMoving on to next file".format(extension))
                 continue
 
             video_f_path = os.path.join(self.data_videos_download, video_name)
@@ -88,9 +93,9 @@ class youtube():
             # Check if necessary to download the video, or just run it through 'cleaning'
             duplicate_file = check_duplicates(folder_path = self.data_videos_download, file_name = video_name)
             if not duplicate_file:
-                
+                print("Downloading {}".format(video_f_path))
                 # Download videos
-                self.download_youtube_video(video_download_f_path = video_f_path, url = url)
+                self.download_youtube_video(video_download_f_path = video_f_path, url = full_link)
 
                 _ = update_label_list(label=label)
             else:
@@ -98,8 +103,24 @@ class youtube():
 
             # Clean videos
             self.clean_youtube_video(video, video_path = video_f_path, output_folder = self.data_videos_clean)
+            try:
+                self.delete_video(video_f_path)
+            except:
+                print("Could not delete {} - moving on".format(video_f_path))
+                list_unsuccessfull_vids_downloaded.append(video_f_path)
+
+            if counter == 25:
+                break
+            else:
+                continue
+        
+        with open('work_dir/unsuccessfull_vid_downloads.txt', 'wb') as fp:
+            pickle.dump(list_unsuccessfull_vids_downloaded, fp)
         
         return self.data_videos_clean, self.data_videos_augmentation_path_output, self.data_videos_keypoints
+
+    def delete_video(self, video_path):
+        os.remove(video_path)
         
     @staticmethod
     def download_youtube_video(video_download_f_path, url):
@@ -108,8 +129,8 @@ class youtube():
 
             video_download_f_path: String - (Full) Path to where the video should be stored
             url: String - Youtube URL for the video
+        print("Extension: {}".format(url))
         '''
-        
         # '-f' determines the format of the video (= mp4), '-o' determines the output folder (and the files' name)
         cmd = ("youtube-dl -f mp4 " + url + " -o " + video_download_f_path)
         p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -123,7 +144,7 @@ class youtube():
                 Framerate = 30
                 Resolution = 340x256
 
-            video: csv information [url, start, stop, label]
+            video: csv information [label, url, start, stop]
             video_path: full path to locate the video to be cleaned (tbc)
             output_folder: Where to store the cleaned video
         '''            
@@ -190,17 +211,10 @@ class youtube():
                 start: At which point the relevant part of the videos start, such that the cleaned video start here - hh:mm:ss  
                 duration: How long does the relevant action last, such that the cleaned video can stop here - hh:mm:ss - [1, 11] seconds
         '''
-        start = video[1]
-        start_minutes = int(start[3:5])
-        start_seconds = int(start[6:8])
+        start_time = video[2]
+        end_time = video[3]
+        duration = end_time - start_time
 
-        stop = video[2]
-        stop_minutes = int(stop[3:5])
-        stop_seconds = int(stop[6:8])
+        start_time = humanize_time(start_time)
 
-        start_datetime = datetime.datetime(2000, 12, 10, 0, start_minutes, start_seconds)
-        stop_datetime = datetime.datetime(2000, 12, 10, 0, stop_minutes, stop_seconds)
-
-        duration = stop_datetime - start_datetime
-
-        return (start, duration)
+        return (start_time, duration)
