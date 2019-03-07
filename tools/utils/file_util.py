@@ -9,6 +9,11 @@ import sys
 sys.path.append("/home/stian/Master_thesis_fork/st-gcn/tools")
 from views.output_messages import duplicate_files_error_message
 
+def humanize_time(secs):
+    mins, secs = divmod(secs, 60)
+    hours, mins = divmod(mins, 60)
+    return '%02d:%02d:%02d' % (hours, mins, secs)
+
 def update_num_classes_yaml(train_demo = ['train', 'demo']):
     '''
         When generating .npy and .pkl file, used for the training, verify that the number of classes in the data set corresponds to the various config files,
