@@ -124,14 +124,6 @@ def flip_frames(video_name_no_ext, video_f_path_input, frames_f_path_output):
         frames_f_path_output: e.g. "st-gcn/data/youtube/videos_clean_augmented/flipped_images/2d1rnOm9IGQ-cup_song"
     '''
 
-    # Works on this video (original .avi):
-    # video_f_path_input = "/home/stian/Master_thesis/data_augmentation/data/videos/Stian.avi"
-
-    # flipped_frames_path = "st-gcn/data/youtube/videos_clean_augmented/flipped_images"
-    print("Video name no extension: ", video_name_no_ext)
-    print("Video full input path: ", video_f_path_input)
-    print("Frames full output path: ", frames_f_path_output)
-
     if not os.path.isfile(video_f_path_input):
         print("This file does not exists {}, please try again \n".format(video_f_path_input))
         return
@@ -146,8 +138,6 @@ def flip_frames(video_name_no_ext, video_f_path_input, frames_f_path_output):
     vid = cv2.VideoCapture(video_f_path_input)
     success, image = vid.read()
 
-
-
     if not success:
         print("------------------ Failed reading video -------------------------\n")
     count = 0
@@ -157,7 +147,6 @@ def flip_frames(video_name_no_ext, video_f_path_input, frames_f_path_output):
         # cv2.imwrite(os.path.join(video_f_path_output, ('frame%d.jpg' % count)), image)
     
         image_flipped = cv2.flip(image, 1)
-        print("image_flipped: ", image_flipped)
         cv2.imwrite(os.path.join(frames_f_path_output, ('frame%d_flipped.jpg' % count)), image_flipped)
     
         success, image = vid.read()
