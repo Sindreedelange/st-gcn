@@ -42,10 +42,11 @@ class youtube():
         self.data_videos_keypoints = "{}/videos_clean_keypoints".format(self.data_youtube_folder)
 
         # Verify that all of the default folders exists, if not, make them
-        verify_directory(self.data_videos_download)
-        verify_directory(self.data_videos_clean)
-        verify_directory(self.data_videos_augmentation_path_output)
-        verify_directory(self.data_videos_keypoints)
+        # Reset all of the default folders
+        reset_directory(self.data_videos_download)
+        reset_directory(self.data_videos_clean)
+        reset_directory(self.data_videos_augmentation_path_output)
+        reset_directory(self.data_videos_keypoints)
 
 
     def get_youtube_videos(self):
@@ -104,23 +105,15 @@ class youtube():
             # Clean videos
             self.clean_youtube_video(video, video_path = video_f_path, output_folder = self.data_videos_clean)
             try:
-                self.delete_video(video_f_path)
+                os.remove(video_f_path)
             except:
                 print("Could not delete {} - moving on".format(video_f_path))
                 list_unsuccessfull_vids_downloaded.append(video_f_path)
-
-            if counter == 25:
-                break
-            else:
-                continue
         
         with open('work_dir/unsuccessfull_vid_downloads.txt', 'wb') as fp:
             pickle.dump(list_unsuccessfull_vids_downloaded, fp)
         
         return self.data_videos_clean, self.data_videos_augmentation_path_output, self.data_videos_keypoints
-
-    def delete_video(self, video_path):
-        os.remove(video_path)
         
     @staticmethod
     def download_youtube_video(video_download_f_path, url):
