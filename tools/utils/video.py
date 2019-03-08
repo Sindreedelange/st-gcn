@@ -105,7 +105,7 @@ def flip_movies(videos_path_input, videos_path_output, extension = ".mjpeg"):
         video_zoomed_f_path = os.path.join(videos_path_input, video_zoomed_f_name)
 
         # Flip the movies' frames, and store them in a "Flipped" folder
-        print("\n Flipping frames in video {} ...".format(new_video_full_path))
+        print("\nFlipping frames in video {} ...".format(new_video_full_path))
         flip_frames(video_name_no_ext = video_name_no_ext, 
                     video_f_path_input = new_video_full_path, 
                     frames_f_path_output = frames_f_output)
@@ -126,9 +126,6 @@ def flip_frames(video_name_no_ext, video_f_path_input, frames_f_path_output):
 
     if not os.path.isfile(video_f_path_input):
         print("This file does not exists {}, please try again \n".format(video_f_path_input))
-        return
-    else:
-        print("This file exists, so it should work \n")
 
     if not os.path.isdir(frames_f_path_output):
         print("Making output directory {} \n".format(frames_f_path_output))
@@ -156,8 +153,6 @@ def frames_to_video(input_path, output_path, output_name, video_ext):
     # output_name += "{}.{}".format("_flipped", video_ext) 
     # print("output_full: ", output_path)
 
-    print("\n Input path: ", input_path, "\n")
-    print("\n Full output path: ", output_path, "\n")
     time.sleep(5)
     try:
         cmd = ("ffmpeg -framerate 30 -i " + input_path + "/frame%000d_flipped.jpg -c:v libx264 -profile:v high -crf 20 -pix_fmt yuv420p " + output_path + " -loglevel quiet")
@@ -174,7 +169,7 @@ def convert_from_mp4_to_avi(input_path, output_path):
     video_no_ext = input_path.split(".")[1]
     if video_ext != "avi":  # If not .avi --> convert to .avi
         #cmd = ("ffmpeg -i filename.mp4 -vcodec copy -acodec copy filename.avi")
-        cmd = ("ffmpeg -i " + input_path + " -vcodec copy -acodec copy " + output_path)
+        cmd = ("ffmpeg -i " + input_path + " -vcodec copy -acodec copy " + output_path + " -loglevel quiet")
         p = subprocess.Popen(cmd, shell=True)
         p.wait()
     os.remove(input_path)
@@ -192,7 +187,7 @@ def zoom_movies(videos_path_input):
         video_zoomed_f_path = os.path.join(videos_path_input, video_zoomed_f_name)
     
         try:
-            cmd = "ffmpeg -i " + video_f_path_input + " -vf 'scale=1.1*iw:-1, crop=iw/1.1:ih/1.1' " + video_zoomed_f_path
+            cmd = "ffmpeg -i " + video_f_path_input + " -vf 'scale=1.1*iw:-1, crop=iw/1.1:ih/1.1' " + video_zoomed_f_path + " -loglevel quiet"
             p = subprocess.Popen(cmd, shell=True)
             p.wait()
         except:
