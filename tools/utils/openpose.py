@@ -60,6 +60,9 @@ class openpose():
         self.data_json_description_train = file2dict(self.data_json_description_train_path)
         self.data_json_description_validation = file2dict(self.data_json_description_validation_path)
 
+        # Set only to one GPU
+        os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+
     
     def openpose(self):
         '''
@@ -92,6 +95,12 @@ class openpose():
                 successfull = False
                 while not successfull:
                     successfull = self.run_video_through_openpose(input_f_path = video_path_full, output_f_path = output_path_full)
+
+                try:
+                    # Save storage
+                    os.remove(video_path_full)
+                except:
+                    print("Tried removing {}, but did not work - disregarding".format(video_path_full))
 
                 self.rename_keypoints_files(file_f_path = output_path_full)
             else:
@@ -229,10 +238,10 @@ class openpose():
                 Relevant when the videos are < 10 seconds long
         '''    
         # Make sure that the downloaded files are separated between 'train' and 'val'
-        test_val_ratio_dict = self.get_num_labels(self.data_videos_keypoints)
+        # test_val_ratio_dict = self.get_num_labels(self.data_videos_keypoints)
         counter = 0
         num_folders = len(os.listdir(self.data_videos_keypoints))
-
+        print(self.data_videos_keypoints)
         for folder in os.listdir(self.data_videos_keypoints):
             counter += 1
             print("Interpreting keypoint files {}/{}".format(counter, num_folders), end='\r')
@@ -254,7 +263,7 @@ class openpose():
             label_index = self.get_label_index(label)
 
             # True if the data should be part of the training set, False if it should be part of the validation set
-            train = self.train_or_val(test_val_ratio_dict, label, train_val_ratio)
+            # train = self.train_or_val(test_val_ratio_dict, label, train_val_ratio)
 
             if train_or_val == 'train':
                 old_dictionary = self.data_json_description_train
@@ -266,7 +275,7 @@ class openpose():
                 current_train_val_folder = self.data_json_skeleton_validation
                  
             # Increase counter
-            test_val_ratio_dict[label]['current'] += 1
+            #test_val_ratio_dict[label]['current'] += 1
 
             filename = folder + ".json"
             dest_path = os.path.join(current_train_val_folder, filename) # Store skeleton files here
