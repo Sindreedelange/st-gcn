@@ -61,7 +61,7 @@ class openpose():
         self.data_json_description_validation = file2dict(self.data_json_description_validation_path)
 
         # Set only to one GPU
-        os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+        # os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
     
     def openpose(self):
@@ -241,13 +241,9 @@ class openpose():
         # test_val_ratio_dict = self.get_num_labels(self.data_videos_keypoints)
         counter = 0
         num_folders = len(os.listdir(self.data_videos_keypoints))
-        print(self.data_videos_keypoints)
         for folder in os.listdir(self.data_videos_keypoints):
             counter += 1
             print("Interpreting keypoint files {}/{}".format(counter, num_folders), end='\r')
-            #print("--------------------------------------------------------------------- \n")
-            #print("Currently working on {}".format(folder))
-            # print("--------------------------------------------------------------------- \n")
             
             # Make sure no more than 300 frames pr video 
             frame_counter = 0
@@ -262,9 +258,6 @@ class openpose():
             # Corresponding Label Index from the label text file
             label_index = self.get_label_index(label)
 
-            # True if the data should be part of the training set, False if it should be part of the validation set
-            # train = self.train_or_val(test_val_ratio_dict, label, train_val_ratio)
-
             if train_or_val == 'train':
                 old_dictionary = self.data_json_description_train
                 old_dictionary_path = self.data_json_description_train_path
@@ -273,9 +266,6 @@ class openpose():
                 old_dictionary = self.data_json_description_validation
                 old_dictionary_path = self.data_json_description_validation_path
                 current_train_val_folder = self.data_json_skeleton_validation
-                 
-            # Increase counter
-            #test_val_ratio_dict[label]['current'] += 1
 
             filename = folder + ".json"
             dest_path = os.path.join(current_train_val_folder, filename) # Store skeleton files here
