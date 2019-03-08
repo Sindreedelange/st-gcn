@@ -9,6 +9,8 @@ import sys
 sys.path.append("/home/stian/Master_thesis_fork/st-gcn/tools")
 from views.output_messages import duplicate_files_error_message
 
+import shutil
+
 def humanize_time(secs):
     mins, secs = divmod(secs, 60)
     hours, mins = divmod(mins, 60)
@@ -208,6 +210,16 @@ def compare_strings(a, b):
         return: True if contains the same, else False
     '''
     return [c for c in a if c.isalpha()] == [c for c in b if c.isalpha()]
+
+def reset_directory(dir_path):
+    '''
+        If directory exists, delete it, and remake it --> Reset it
+            If it does not exists, make it
+    '''
+    if os.path.isdir(dir_path):
+        shutil.rmtree(dir_path)
+
+    os.makedirs(dir_path)
 
 def verify_directory(dir_path):
     '''
