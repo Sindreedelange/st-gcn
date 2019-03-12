@@ -34,7 +34,7 @@ class youtube():
         self.csv_path = csv_path
         self.data_augmentation = data_augmentation
 
-        self.data_youtube_folder = "{}/original_data".format(data_path)
+        self.data_youtube_folder = "{}/youtube".format(data_path)
 
         self.data_videos_download = "{}/videos".format(self.data_youtube_folder)
         self.data_videos_clean = "{}/videos_clean".format(self.data_youtube_folder)
@@ -125,7 +125,7 @@ class youtube():
         print("Extension: {}".format(url))
         '''
         # '-f' determines the format of the video (= mp4), '-o' determines the output folder (and the files' name)
-        cmd = ("youtube-dl -f mp4 " + url + " -o " + video_download_f_path)
+        cmd = ("youtube-dl -c -f mp4 " + url + " -o " + video_download_f_path)
         p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         # Wait until process is finished
