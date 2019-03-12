@@ -78,6 +78,8 @@ class youtube():
             
             # Remember: [url, start, stop, label]
             label = video[0]
+            label = "_".join(label.split(" "))
+
             extension = video[1]
 
             full_link = 'https://www.youtube.com/watch?v={}'.format(extension)
@@ -108,10 +110,11 @@ class youtube():
                 os.remove(video_f_path)
             except:
                 print("Could not delete {} - moving on".format(video_f_path))
-                list_unsuccessfull_vids_downloaded.append(video_f_path)
+                list_unsuccessfull_vids_downloaded.append(full_link)
         
-        with open('work_dir/unsuccessfull_vid_downloads.txt', 'wb') as fp:
-            pickle.dump(list_unsuccessfull_vids_downloaded, fp)
+        with open('work_dir/unsuccessfull_vid_downloads.txt', "w") as f:
+            for s in list_unsuccessfull_vids_downloaded:
+                f.write(str(s) +"\n")
         
         return self.data_videos_clean, self.data_videos_augmentation_path_output, self.data_videos_keypoints
         
@@ -125,7 +128,7 @@ class youtube():
         print("Extension: {}".format(url))
         '''
         # '-f' determines the format of the video (= mp4), '-o' determines the output folder (and the files' name)
-        cmd = ("youtube-dl -c -f mp4 " + url + " -o " + video_download_f_path)
+        cmd = ("youtube-dl " + url + " -f mp4 -o " + video_download_f_path)
         p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         # Wait until process is finished
