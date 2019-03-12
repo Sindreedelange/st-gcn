@@ -13,7 +13,7 @@ from utils.file_util import verify_directory, update_num_classes_yaml
 sys.path.append(
     os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
 from feeder.feeder_kinetics import Feeder_kinetics
-sys.path.append("/home/stian/Master_thesis_fork/st-gcn/tools")
+sys.path.append("/home/robot/robot/st-gcn/tools")
 
 toolbar_width = 30
 
@@ -74,9 +74,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Kinetics-skeleton Data Converter.')
     parser.add_argument(
-        '--data_path', default='data/Kinetics/Kinetics/kinetics-skeleton/')
+        '--data_path', default='/data-nas/robot/data/Kinetics')
     parser.add_argument(
-        '--out_folder', default='data/Kinetics/Kinetics/kinetics-skeleton/')
+        '--out_folder', default='/data-nas/robot/data/Kinetics')
     arg = parser.parse_args()
 
     part = ['train', 'val']
