@@ -6,7 +6,7 @@ import os
 import pandas as pd
 
 import sys
-sys.path.append("/home/stian/Master_thesis_fork/st-gcn/tools")
+sys.path.append("/home/robot/robot/st-gcn/tools")
 from views.output_messages import duplicate_files_error_message
 
 import shutil
