@@ -157,7 +157,7 @@ def flip_frames(video_name_no_ext, video_f_path_input, frames_f_path_output):
         # cv2.imwrite(os.path.join(video_f_path_output, ('frame%d.jpg' % count)), image)
     
         image_flipped = cv2.flip(image, 1)
-        print("image_flipped: ", image_flipped)
+        # print("image_flipped: ", image_flipped)
         cv2.imwrite(os.path.join(frames_f_path_output, ('frame%d_flipped.jpg' % count)), image_flipped)
     
         success, image = vid.read()

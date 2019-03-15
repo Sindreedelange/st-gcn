@@ -36,7 +36,7 @@ class openpose():
             data_json_description_train_path = String - Path to the 'description'/'summary' file for each skeleton file in the training set
             data_json_description_validation_path = Path to the 'description'/'summary' file for each skeleton file in the validation set):
         '''
-        self.data_kinetics_skeleton = "{}/Kinetics/kinetics-skeleton".format(data_path)
+        self.data_kinetics_skeleton = "{}/kinetics-skeleton".format(data_path)
 
         self.data_videos_clean = data_videos_clean
         self.data_videos_keypoints = data_videos_keypoints
@@ -45,20 +45,14 @@ class openpose():
         self.openpose_bin_path = os.path.join(".", openpose_bin_path)
         self.model_folder = model_folder
 
-        self.data_json_skeleton_train = "{}/kinetics_train_reduced".format(self.data_kinetics_skeleton)
-        self.data_json_skeleton_validation = "{}/kinetics_val_reduced".format(self.data_kinetics_skeleton)
-        self.data_json_description_train_path = "{}/kinetics_label_reduced_train.json".format(self.data_kinetics_skeleton)
-        self.data_json_description_validation_path = "{}/kinetics_label_reduced_val.json".format(self.data_kinetics_skeleton)
+        self.data_json_skeleton_test = "{}/kinetics_test_reduced".format(self.data_kinetics_skeleton)
+        self.data_json_description_test_path = "{}/kinetics_label_reduced_test.json".format(self.data_kinetics_skeleton)
 
         # Verify that all of the default folders exists, if not, make them
-        verify_directory(self.data_videos_keypoints)
-        verify_directory(self.data_videos_clean)
-        verify_directory(self.data_json_skeleton_train)
-        verify_directory(self.data_json_skeleton_validation)
+        verify_directory(self.data_json_skeleton_test)
 
         # Load the .json 'description files
-        self.data_json_description_train = file2dict(self.data_json_description_train_path)
-        self.data_json_description_validation = file2dict(self.data_json_description_validation_path)
+        self.data_json_description_test = file2dict(self.data_json_description_test_path)
 
     
     def openpose(self):
@@ -114,7 +108,7 @@ class openpose():
 
         # Problems with openpose freezing after x number of videos, so to combat this: 
             # Stop the process after y seconds, and try again 
-        timeout_limit = 45
+        timeout_limit = 35
         successfull = True
         for _ in range(timeout_limit):
             time.sleep(1)
@@ -153,69 +147,15 @@ class openpose():
         counter = 0
 
         for skeleton_file in skeleton_files_list_sorted:
+            counter += 1
+
             new_filename = str(counter) + '_keypoints.json'
         
             old_file = os.path.join(file_f_path, skeleton_file)
             new_file = os.path.join(file_f_path, new_filename)
             os.rename(old_file, new_file)
 
-            counter += 1
-
-
-    @staticmethod
-    def get_num_labels(dir_path):
-        '''
-            Input path to directory which contains folders, each corresponding to a youtube video.
-            Finding each video's label in their name, and counting them
-
-            dir_path: String - path to directory containing the folder corresponding to a youtube video
-
-            Return: Dictionary
-                        label: label name
-                            total: total occurences of that specific label
-                            counter: used to compare with total to get the ratio
-        '''
-        file_list = os.listdir(dir_path)
-
-        label_dict = {}
-        for file in file_list:
-            # Example: 7oqsc6ahHVI--cup_song__0__flipped --> Get 'cup_song'
-            label = file.split("---")[1].split("__")[0]
-
-            if label in label_dict:
-                label_dict[label]['total'] += 1
-            else:
-                # New label, so initialize it with 'starting values' 
-                label_dict[label] = {'total': 1, 'current': 0}
-        
-        return label_dict
-
-    @staticmethod
-    def train_or_val(label_counter_dict, label, train_val_ratio):
-        '''
-            Based on the inputed dictionary, return whether the data should be stored in train or validation data set
-
-            label_counter_dict: Dictionary 
-                label:
-                    total: 
-                    counter:
-            label: String - name of the current label
-            train_val_ratio: Double - the ratio to which compare the counter/total number to, which ultimately decides if train or validation
-
-            Return: Boolean
-                True: Training set
-                False: Validation set
-
-        '''
-        # Divide the data between train and validation data set
-        current = label_counter_dict[label]['current']
-        total = label_counter_dict[label]['total']
-
-        ratio = current/total
-
-        return ratio < train_val_ratio 
-
-    def openpose_skeleton_to_stgcn(self, train_val_ratio = 0.9, frame_limit = 300):
+    def openpose_skeleton_to_stgcn(self, frame_limit = 300):
         '''
             "Translate" openpose skeletonfiles to one single skeletonfile which st-gcn accepts as input, for either training or validating
 
@@ -224,11 +164,8 @@ class openpose():
             frame_limit: Int - The limit on number of frames pr. video (the paper used 300, so we will be using the same)
                 Relevant when the videos are < 10 seconds long
         '''    
-        # Make sure that the downloaded files are separated between 'train' and 'val'
-        test_val_ratio_dict = self.get_num_labels(self.data_videos_keypoints)
-        counter = 0
         num_folders = len(os.listdir(self.data_videos_keypoints))
-
+        counter = 0
         for folder in os.listdir(self.data_videos_keypoints):
             counter += 1
             print("Interpreting keypoint files {}/{}".format(counter, num_folders), end='\r')
@@ -245,24 +182,13 @@ class openpose():
             stgcn_data = {}
 
             # Get label name from folder name
-            label = folder.split("---")[1].split("__")[0]
+            label = folder.split("__")[0]
             # Corresponding Label Index from the label text file
             label_index = self.get_label_index(label)
 
-            # True if the data should be part of the training set, False if it should be part of the validation set
-            train = self.train_or_val(test_val_ratio_dict, label, train_val_ratio)
-
-            if train:
-                old_dictionary = self.data_json_description_train
-                old_dictionary_path = self.data_json_description_train_path
-                current_train_val_folder = self.data_json_skeleton_train
-            else:
-                old_dictionary = self.data_json_description_validation
-                old_dictionary_path = self.data_json_description_validation_path
-                current_train_val_folder = self.data_json_skeleton_validation
-                 
-            # Increase counter
-            test_val_ratio_dict[label]['current'] += 1
+            old_dictionary = self.data_json_description_test
+            old_dictionary_path = self.data_json_description_test_path
+            current_train_val_folder = self.data_json_skeleton_test
 
             filename = folder + ".json"
             dest_path = os.path.join(current_train_val_folder, filename) # Store skeleton files here
@@ -293,13 +219,14 @@ class openpose():
                 frame_data['skeleton'] = skeletons
                 stgcn_data_array += [frame_data]  
             
-                if frame_counter > frame_limit: # Do not exceed 300 frames
+                if frame_counter >= frame_limit - 1: # Do not exceed 300 frames
                     message = ("Too many frames in file: {} - limiting it to {}".format(filename, frame_limit))
                     print(message)
                     break
             
             # If < 300 frames - pad the dictionary by getting the x first frames in dictionary, where x = 300 - number of frames, and add them to the end
             if frame_counter < frame_limit:
+                print("Padding {}".format(filename))
                 self.pad_video_dict(stgcn_data_array, frame_limit)
         
             # Append to old label dictionary
