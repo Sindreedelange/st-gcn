@@ -103,13 +103,21 @@ class IO():
             child_counter = 0
             for child in model.children():
                 if child_counter < 3:
-                    self.print_log("child {} was frozen".format(child_counter))
-                    for param in child.parameters():
-                        param.requires_grad = False
+                    for name, param in child.named_parameters():
+                        match = re.search("10.", name)
+                        print("-------------------------------------------")
+                        if match is None:
+                            param.requires_grad = False
+                            self.print_log("Layer {} was frozen".format(name))
+                        else:
+                            self.print_log("Layer {} was not frozen".format(name))
+
                 else:
-                    self.print_log("child {} was not frozen".format(child_counter))
+                    for name, param in child.named_parameters():
+                        self.print_log("Child {} was not frozen".format(name))
 
                 child_counter += 1
+            print("Child counter = {}".format(child_counter))
             # model.apply(print_parameters)
         else:
             self.print_log("Not freezing any layers")
