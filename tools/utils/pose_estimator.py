@@ -39,6 +39,8 @@ class pose_estimator():
             data_json_description_train_path = String - Path to the 'description'/'summary' file for each skeleton file in the training set
             data_json_description_validation_path = Path to the 'description'/'summary' file for each skeleton file in the validation set):
         '''
+        self.data_kinetics_skeleton = os.path.join(data_path, os.path.join('Kinetics', 'kinetics-skeleton'))
+
         self.videos_clean = videos_clean
         self.videos_keypoints = videos_keypoints
         self.videos_skeletons = videos_skeletons
@@ -48,14 +50,18 @@ class pose_estimator():
 
         train_val_test_valid_vals = ['train', 'val', 'test']
         if train_val_test not in train_val_test_valid_vals:
+            print("Invalid value for train val test")
             return None
 
-        self.data_folder_skeleton = "{}/kinetics_{}_reduced".format(self.videos_skeletons, train_val_test)
-        self.data_json_description_path = "{}/kinetics_label_reduced_{}.json".format(self.videos_skeletons, train_val_test)
+
+        self.data_folder_skeleton = "{}/kinetics_{}_reduced".format(self.data_kinetics_skeleton, train_val_test)
+        self.data_json_description_path = "{}/kinetics_label_reduced_{}.json".format(self.data_kinetics_skeleton, train_val_test)
 
         # Verify that all of the (output) folders exists, if not, make them
+        verify_directory(self.data_kinetics_skeleton)
         verify_directory(self.videos_keypoints)
         verify_directory(self.videos_skeletons)
+        verify_directory(self.data_folder_skeleton)
 
         # Load the .json 'description files
         self.data_json_description = file2dict(self.data_json_description_path)
@@ -110,7 +116,7 @@ class pose_estimator():
             Return: Boolean - Whether or not the video was ran through openpose, successfully, or if it froze, such that the program had to be terminated
         '''
         if pose_estimator == 'tf_pose':
-            cmd = ('python tf-pose-estimation/run_video.py --video {} --output-json {}'.format(input_fpath, output_fpath))
+            cmd = ('python tf-pose-estimation/run_video.py --video {} --output_json {}'.format(input_fpath, output_fpath))
         elif pose_estimator == 'openpose':
             cmd = ('openpose/build/examples/openpose/openpose.bin --video {} --model_folder {} --write_json {} --model_pose COCO --keypoints_scale 3'.format(input_fpath, self.model_folder. output_fpath))
         else:
@@ -154,16 +160,18 @@ class pose_estimator():
 
             file_f_path: String - full path to where the folder, containing all the skeleton files, is located 
         '''
+        skeleton_files_list_sorted = natsorted(os.listdir(file_fpath))
+        
         counter = 0
 
-        for skeleton_file in natsorted(os.listdir(file_fpath)):
-            counter += 1
-
+        for skeleton_file in skeleton_files_list_sorted:
             new_filename = str(counter) + '_keypoints.json'
         
             old_file = os.path.join(file_fpath, skeleton_file)
             new_file = os.path.join(file_fpath, new_filename)
             os.rename(old_file, new_file)
+
+            counter += 1
 
     def skeleton_to_stgcn(self, frame_limit = 300):
         '''
@@ -198,12 +206,12 @@ class pose_estimator():
             old_dictionary_path = self.data_json_description_path
 
             output_fname = folder + ".json"
-            output_fpath = os.path.join(self.data_folder_skeleton, output_fname) # Store skeleton files here
+            output_fpath = os.path.join(self.videos_skeletons, output_fname) # Store skeleton files here
         
             for file in natsorted(os.listdir(cur_fpath)):
                 frame_counter += 1
 
-                filename_fpath = os.path.join(folder_name, file)
+                filename_fpath = os.path.join(cur_fpath, file)
                 # Get frame id from the filename --> Ultimately combining them all to one .json file
                 frame_id = int(((filename_fpath.split('/')[-1]).split('.')[0]).split('_')[0]) 
             
@@ -226,13 +234,12 @@ class pose_estimator():
                 stgcn_data_array += [frame_data]  
             
                 if frame_counter >= frame_limit - 1: # Do not exceed 300 frames
-                    message = ("Too many frames in file: {} - limiting it to {}".format(output_fname, frame_limit))
-                    print(message)
+                    #print("Too many frames in file: {} - limiting it to {}\n".format(output_fname, frame_limit))
                     break
             
             # If < 300 frames - pad the dictionary by getting the x first frames in dictionary, where x = 300 - number of frames, and add them to the end
-            if frame_counter < frame_limit:
-                print("Padding {}".format(output_fname))
+            if frame_counter < frame_limit - 1:
+                #print("Padding {}\n".format(output_fname))
                 self.pad_video_dict(stgcn_data_array, frame_limit)
         
             # Append to old label dictionary

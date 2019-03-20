@@ -113,9 +113,7 @@ def flip_frames(video_name_no_ext, video_f_path_input, frames_f_path_output):
         video_name: e.g. "0EDCBPPstwY-jumping_jacks"
 
         video_f_path_input: e.g. "st-gcn/data/youtube/videos_clean/2d1rnOm9IGQ-cup_song.mjpeg"
-
         video_f_path_output: e.g. "st-gcn/data/youtube/videos_clean/2d1rnOm9IGQ-cup_song__flipped.mjpeg"
-
         frames_f_path_output: e.g. "st-gcn/data/youtube/videos_clean_augmented/flipped_images/2d1rnOm9IGQ-cup_song"
     '''
     if not os.path.isfile(video_f_path_input):
@@ -123,7 +121,6 @@ def flip_frames(video_name_no_ext, video_f_path_input, frames_f_path_output):
         return
 
     if not os.path.isdir(frames_f_path_output):
-        print("Making output directory {} \n".format(frames_f_path_output))
         os.makedirs(frames_f_path_output)
 
 
@@ -174,6 +171,7 @@ def convert_from_mp4_to_avi(input_path, output_path):
 def zoom_movies(videos_path_input):
     
     for video_name in os.listdir(videos_path_input):
+        print("Zooming on {}".format(video_name), end='\r')
         video_name_no_ext, video_ext = video_name.split(".")
         video_f_path_input = os.path.join(videos_path_input, video_name)
     

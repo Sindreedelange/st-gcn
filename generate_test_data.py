@@ -32,8 +32,9 @@ if __name__ == '__main__':
     for video in os.listdir(videos_raw):
         cur_vid_inp = os.path.join(videos_raw, video)
         cur_vid_outp = os.path.join(videos_cleaned, video)
-        print("Cleaning {}".format(cur_vid_inp), end='\r')
+        print("Cleaning {}".format(video), end='\r')
         clean_video(cur_vid_inp, cur_vid_outp)
+    print("\nCleaning done\n\n")
     
     if augment:
         flip_movies(videos_path_input = videos_cleaned, videos_path_output = videos_augment)

@@ -74,12 +74,19 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Kinetics-skeleton Data Converter.')
     parser.add_argument(
-        '--data_path', default='../data_do_not_touch/test_data/kinetics-skeleton/')
+        '--data_path', default='data/Kinetics/kinetics-skeleton/')
     parser.add_argument(
-        '--out_folder', default='../data_do_not_touch/test_data/kinetics-skeleton')
+        '--out_folder', default='data/Kinetics/kinetics-skeleton')
+    parser.add_argument(
+        '--test', default = None)
+
     arg = parser.parse_args()
 
-    part = ['test']
+    part = list
+    if arg.test is None:
+        part = ['train', 'val']
+    else:     
+        part = ['test']
     for p in part:
         # Path to skeleton files folder
         data_path = '{}/kinetics_{}_reduced'.format(arg.data_path, p)

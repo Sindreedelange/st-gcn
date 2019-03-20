@@ -1,6 +1,6 @@
 from tools.utils.youtube import youtube as yt_util
 from tools.utils.openpose import openpose as op_util
-from tools.utils.video import flip_movies
+from tools.utils.video import flip_movies, zoom_movies
 import argparse
 
 if __name__ == '__main__':
@@ -24,6 +24,8 @@ if __name__ == '__main__':
     # Currently only flipping the videos, tho probably the most relevant augmentation. 
     if augment:
         flip_movies(videos_path_input = videos_cleaned, videos_path_output = videos_augment)
+        zoom_movies(videos_path_input = videos_cleaned)    
+
 
     op = op_util(data_path = data_path, data_videos_clean = videos_cleaned, data_videos_keypoints = videos_keypoints)
     op.openpose()

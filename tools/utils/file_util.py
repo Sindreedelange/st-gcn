@@ -14,7 +14,7 @@ def humanize_time(secs):
     hours, mins = divmod(mins, 60)
     return '%02d:%02d:%02d' % (hours, mins, secs)
 
-def update_num_classes_yaml(train_demo = ['train', 'demo']):
+def update_num_classes_yaml(train_demo = ['train', 'demo', 'test']):
     '''
         When generating .npy and .pkl file, used for the training, verify that the number of classes in the data set corresponds to the various config files,
         such as 'config/train.yaml'
