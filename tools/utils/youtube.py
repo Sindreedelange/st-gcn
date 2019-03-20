@@ -34,7 +34,7 @@ class youtube():
         self.csv_path = csv_path
         self.data_augmentation = data_augmentation
 
-        self.data_youtube_folder = "{}/original_data".format(data_path)
+        self.data_youtube_folder = "{}/youtube".format(data_path)
 
         self.data_videos_download = "{}/videos".format(self.data_youtube_folder)
         self.data_videos_clean = "{}/videos_clean".format(self.data_youtube_folder)
