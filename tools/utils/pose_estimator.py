@@ -13,23 +13,21 @@ import psutil
 from .file_util import *
 # from views.output_messages import *
 
-class openpose():
+class pose_estimator():
 
     def __init__ (self,  
                     data_path,
                     data_videos_clean,
                     data_videos_keypoints,
                     label_text_file = "resource/kinetics_skeleton/label_name_reduced.txt",
-                    openpose_bin_path = "openpose/build/examples/openpose/openpose.bin", 
                     model_folder = "openpose/models/"):        
         '''
             data_path: String - Path to data
 
-            data_videos_clean: String - path to (clean) videos to be ran through openpose
+            data_videos_clean: String - path to (clean) videos to be ran through pose estimator
                                 aka. extract keypoints 
             data_videos_keypoints: String - path to where each videos' keypoints are to be stored
             
-            openpose_bin_path: Path to find the '.bin' file necessary to run the videos through openpose
             model_folder: Because we are not running our scripts from inside '/openpose' we need to define where one can find the models used for mapping the skeletons
             data_json_skeleton_train = String - Path to where skeleton files (.json) for the training set should be stored
             data_json_skeleton_validation = String - Path to where skeleton files (.json) for the validation set should be stored
@@ -42,7 +40,6 @@ class openpose():
         self.data_videos_keypoints = data_videos_keypoints
 
         self.label_text_file = label_text_file
-        self.openpose_bin_path = os.path.join(".", openpose_bin_path)
         self.model_folder = model_folder
 
         self.data_json_skeleton_test = "{}/kinetics_test_reduced".format(self.data_kinetics_skeleton)
@@ -55,7 +52,7 @@ class openpose():
         self.data_json_description_test = file2dict(self.data_json_description_test_path)
 
     
-    def openpose(self):
+    def pose_estimating(self):
         '''
             Runs through all of the (cleaned) downloaded videos from Youtube, check for duplicates (the existence of skeletonfiles with the same name),
             if they are not duplicates, store the skeletonfiles (gotten from Openpose), and rename that such that later work will be simpler.  
@@ -155,7 +152,7 @@ class openpose():
             new_file = os.path.join(file_f_path, new_filename)
             os.rename(old_file, new_file)
 
-    def openpose_skeleton_to_stgcn(self, frame_limit = 300):
+    def skeleton_to_stgcn(self, frame_limit = 300):
         '''
             "Translate" openpose skeletonfiles to one single skeletonfile which st-gcn accepts as input, for either training or validating
 
