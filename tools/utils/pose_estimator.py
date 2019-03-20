@@ -17,47 +17,56 @@ class pose_estimator():
 
     def __init__ (self,  
                     data_path,
-                    data_videos_clean,
-                    data_videos_keypoints,
+                    videos_clean,
+                    videos_keypoints,
+                    videos_skeletons,
+                    train_val_test,
                     label_text_file = "resource/kinetics_skeleton/label_name_reduced.txt",
                     model_folder = "openpose/models/"):        
         '''
             data_path: String - Path to data
 
-            data_videos_clean: String - path to (clean) videos to be ran through pose estimator
-                                aka. extract keypoints 
-            data_videos_keypoints: String - path to where each videos' keypoints are to be stored
+            videos_clean: String - path to (clean) videos to be ran through pose estimator aka. extract keypoints 
+            videos_keypoints: String - path to where each videos' keypoints are to be stored
+            videos_skeletons: String - path to where to store skeleton files 
             
+            train_val_test = String : which part of the program's cyclus one is currently in 
+
             model_folder: Because we are not running our scripts from inside '/openpose' we need to define where one can find the models used for mapping the skeletons
+
             data_json_skeleton_train = String - Path to where skeleton files (.json) for the training set should be stored
             data_json_skeleton_validation = String - Path to where skeleton files (.json) for the validation set should be stored
             data_json_description_train_path = String - Path to the 'description'/'summary' file for each skeleton file in the training set
             data_json_description_validation_path = Path to the 'description'/'summary' file for each skeleton file in the validation set):
         '''
-        self.data_kinetics_skeleton = "{}/kinetics-skeleton".format(data_path)
-
-        self.data_videos_clean = data_videos_clean
-        self.data_videos_keypoints = data_videos_keypoints
+        self.videos_clean = videos_clean
+        self.videos_keypoints = videos_keypoints
+        self.videos_skeletons = videos_skeletons
 
         self.label_text_file = label_text_file
         self.model_folder = model_folder
 
-        self.data_json_skeleton_test = "{}/kinetics_test_reduced".format(self.data_kinetics_skeleton)
-        self.data_json_description_test_path = "{}/kinetics_label_reduced_test.json".format(self.data_kinetics_skeleton)
+        train_val_test_valid_vals = ['train', 'val', 'test']
+        if train_val_test not in train_val_test_valid_vals:
+            return None
 
-        # Verify that all of the default folders exists, if not, make them
-        verify_directory(self.data_json_skeleton_test)
+        self.data_folder_skeleton = "{}/kinetics_{}_reduced".format(self.videos_skeletons, train_val_test)
+        self.data_json_description_path = "{}/kinetics_label_reduced_{}.json".format(self.videos_skeletons, train_val_test)
+
+        # Verify that all of the (output) folders exists, if not, make them
+        verify_directory(self.videos_keypoints)
+        verify_directory(self.videos_skeletons)
 
         # Load the .json 'description files
-        self.data_json_description_test = file2dict(self.data_json_description_test_path)
+        self.data_json_description = file2dict(self.data_json_description_path)
 
     
     def pose_estimating(self):
         '''
-            Runs through all of the (cleaned) downloaded videos from Youtube, check for duplicates (the existence of skeletonfiles with the same name),
-            if they are not duplicates, store the skeletonfiles (gotten from Openpose), and rename that such that later work will be simpler.  
+            Runs through all of the (cleaned) videos, check for duplicates (the existence of skeletonfiles with the same name),
+            if they are not duplicates, store the skeletonfiles (gotten from pose estimator), and rename that such that later work will be simpler.  
         '''
-        clean_video_list = os.listdir(self.data_videos_clean)
+        clean_video_list = os.listdir(self.videos_clean)
 
         # Just for output to the user
         num_files = len(clean_video_list)
@@ -67,45 +76,51 @@ class pose_estimator():
             counter += 1
 
             print("\n --------------------------------------------------------------------- \n")
-            print("Currently running {} through OpenPose \t {}/{}".format(file, counter, num_files))
+            print("Currently running {} through pose estimator \t {}/{}".format(file, counter, num_files))
             print("\n --------------------------------------------------------------------- \n")
             # Input video full path
-            video_path_full = os.path.join(self.data_videos_clean, file)
+            video_fpath = os.path.join(self.videos_clean, file)
        
             # The folder name, for each video's skeleton files, should not include the video extension
             filename_no_extension = file.split(".")[0]
 
-            duplicate_file = check_duplicates(folder_path = self.data_videos_keypoints, file_name = filename_no_extension)
+            duplicate_file = check_duplicates(folder_path = self.videos_keypoints, file_name = filename_no_extension)
 
             if not duplicate_file:
-                output_path_full = os.path.join(self.data_videos_keypoints, filename_no_extension)
+                output_fpath = os.path.join(self.videos_keypoints, filename_no_extension)
 
                 successfull = False
+                # Problems with pose estimators freezing - run this until it does not freeze
                 while not successfull:
-                    successfull = self.run_video_through_openpose(input_f_path = video_path_full, output_f_path = output_path_full)
+                    successfull = self.run_video_through_pose_estimator(input_fpath = video_fpath, output_fpath = output_fpath)
 
-                self.rename_keypoints_files(file_f_path = output_path_full)
+                self.rename_keypoints_files(file_fpath = output_fpath)
             else:
-                duplicate_files_error_message(self.data_videos_keypoints, filename_no_extension)
+                duplicate_files_error_message(self.videos_keypoints, filename_no_extension)
 
-    def run_video_through_openpose(self, input_f_path, output_f_path): 
+    def run_video_through_pose_estimator(self, input_fpath, output_fpath, pose_estimator = 'tf_pose', timeout_limit = 35): 
         '''
-            Run the cleaned videos from Youtube through openpose to get their skeletonfiles
+            Run the cleaned videos through the pose estimator of their choice, to get their skeletonfiles
 
             input_f_path: String - Full path to the file that should be put through Openpose
             output_f_path: String - Full path to where the new (skeletonfile) should be stored
+            pose_estimator: String - 'openpose' or 'tf_pose'
+            timeout_limit = Int - limit for how long each video should be ran through the pose estimator before restarting
 
             Return: Boolean - Whether or not the video was ran through openpose, successfully, or if it froze, such that the program had to be terminated
         '''
-        cmd = (self.openpose_bin_path + " --video " + input_f_path + " --model_folder " + self.model_folder + " --write_json " + output_f_path + " --model_pose COCO --keypoint_scale 3")        
+        if pose_estimator == 'tf_pose':
+            cmd = ('python tf-pose-estimation/run_video.py --video {} --output-json {}'.format(input_fpath, output_fpath))
+        elif pose_estimator == 'openpose':
+            cmd = ('openpose/build/examples/openpose/openpose.bin --video {} --model_folder {} --write_json {} --model_pose COCO --keypoints_scale 3'.format(input_fpath, self.model_folder. output_fpath))
+        else:
+            print("------------------------------------- \nWrong pose estimator\n---------------------------------")
+            return None        
+
         parent = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-        # Wait until process is finished - not relevant anymore because the program needs to keep running in order to stop Openpose, if it freezes
-        # p.wait()
-
-        # Problems with openpose freezing after x number of videos, so to combat this: 
+        # Problems with pose estimators freezing after x number of videos, so to combat this: 
             # Stop the process after y seconds, and try again 
-        timeout_limit = 35
         successfull = True
         for _ in range(timeout_limit):
             time.sleep(1)
@@ -127,7 +142,7 @@ class pose_estimator():
         return successfull
     
     @staticmethod
-    def rename_keypoints_files(file_f_path):
+    def rename_keypoints_files(file_fpath):
         '''
             Rename skeleton files
 
@@ -139,41 +154,37 @@ class pose_estimator():
 
             file_f_path: String - full path to where the folder, containing all the skeleton files, is located 
         '''
-        skeleton_files_list_sorted = natsorted(os.listdir(file_f_path))
-        
         counter = 0
 
-        for skeleton_file in skeleton_files_list_sorted:
+        for skeleton_file in natsorted(os.listdir(file_fpath)):
             counter += 1
 
             new_filename = str(counter) + '_keypoints.json'
         
-            old_file = os.path.join(file_f_path, skeleton_file)
-            new_file = os.path.join(file_f_path, new_filename)
+            old_file = os.path.join(file_fpath, skeleton_file)
+            new_file = os.path.join(file_fpath, new_filename)
             os.rename(old_file, new_file)
 
     def skeleton_to_stgcn(self, frame_limit = 300):
         '''
-            "Translate" openpose skeletonfiles to one single skeletonfile which st-gcn accepts as input, for either training or validating
+            "Translate" pose estimated skeletonfiles to one single skeletonfile which st-gcn accepts as input, for either training, validating, or testing
 
             output_path: String - Where to output both the translated skeleton files, and the corresponding label dictionaries
             train_val_ratio: Double - The ratio between training and validation data 
             frame_limit: Int - The limit on number of frames pr. video (the paper used 300, so we will be using the same)
                 Relevant when the videos are < 10 seconds long
         '''    
-        num_folders = len(os.listdir(self.data_videos_keypoints))
+        folders_keypoints = os.listdir(self.videos_keypoints)
+        num_folders = len(folders_keypoints)
         counter = 0
-        for folder in os.listdir(self.data_videos_keypoints):
+        for folder in folders_keypoints:
+            cur_fpath = os.path.join(self.videos_keypoints, folder)
+
             counter += 1
             print("Interpreting keypoint files {}/{}".format(counter, num_folders), end='\r')
-            #print("--------------------------------------------------------------------- \n")
-            #print("Currently working on {}".format(folder))
-            # print("--------------------------------------------------------------------- \n")
-            
+
             # Make sure no more than 300 frames pr video 
             frame_counter = 0
-        
-            folder_name = os.path.join(self.data_videos_keypoints, folder)
         
             stgcn_data_array = []
             stgcn_data = {}
@@ -183,25 +194,23 @@ class pose_estimator():
             # Corresponding Label Index from the label text file
             label_index = self.get_label_index(label)
 
-            old_dictionary = self.data_json_description_test
-            old_dictionary_path = self.data_json_description_test_path
-            current_train_val_folder = self.data_json_skeleton_test
+            old_dictionary = self.data_json_description
+            old_dictionary_path = self.data_json_description_path
 
-            filename = folder + ".json"
-            dest_path = os.path.join(current_train_val_folder, filename) # Store skeleton files here
+            output_fname = folder + ".json"
+            output_fpath = os.path.join(self.data_folder_skeleton, output_fname) # Store skeleton files here
         
-            file_list_sorted = natsorted(os.listdir(folder_name))
-            for file in file_list_sorted:
+            for file in natsorted(os.listdir(cur_fpath)):
                 frame_counter += 1
 
-                filename_full_path = os.path.join(folder_name, file)
+                filename_fpath = os.path.join(folder_name, file)
                 # Get frame id from the filename --> Ultimately combining them all to one .json file
-                frame_id = int(((filename_full_path.split('/')[-1]).split('.')[0]).split('_')[0]) 
+                frame_id = int(((filename_fpath.split('/')[-1]).split('.')[0]).split('_')[0]) 
             
                 frame_data = {'frame_index': frame_id}
             
                 # Load the .json files, one by one
-                data = json.load(open(filename_full_path))
+                data = json.load(open(filename_fpath))
                 skeletons = []
                 for person in data['people']:
                     score, coordinates = [], []
@@ -217,13 +226,13 @@ class pose_estimator():
                 stgcn_data_array += [frame_data]  
             
                 if frame_counter >= frame_limit - 1: # Do not exceed 300 frames
-                    message = ("Too many frames in file: {} - limiting it to {}".format(filename, frame_limit))
+                    message = ("Too many frames in file: {} - limiting it to {}".format(output_fname, frame_limit))
                     print(message)
                     break
             
             # If < 300 frames - pad the dictionary by getting the x first frames in dictionary, where x = 300 - number of frames, and add them to the end
             if frame_counter < frame_limit:
-                print("Padding {}".format(filename))
+                print("Padding {}".format(output_fname))
                 self.pad_video_dict(stgcn_data_array, frame_limit)
         
             # Append to old label dictionary
@@ -238,7 +247,7 @@ class pose_estimator():
         
             #dict2file(dest_path, stgcn_data)
             # Store the skeleton file
-            with open(dest_path, 'w') as outfile:
+            with open(output_fpath, 'w') as outfile:
                 json.dump(stgcn_data, outfile, indent=4)
 
             # dict2file(label_dest_path_filename, old_dictionary)

@@ -73,12 +73,11 @@ def flip_movies(videos_path_input, videos_path_output, extension = ".mjpeg"):
                 e.g. data_augmentation_path_output="st-gcn/data/youtube/videos_clean_augmented
 
     '''
-
     # Output 
     frames_output = os.path.join(videos_path_output, "flipped_images")
     
     for video_name in os.listdir(videos_path_input):
-
+        print("Flipping frames: {}".format(video_name), end='\r')
         # Input
         video_name_no_ext = video_name.split(".")[0]
         video_ext = video_name.split(".")[1]
@@ -86,8 +85,6 @@ def flip_movies(videos_path_input, videos_path_output, extension = ".mjpeg"):
 
         # Convert to .mjpeg, necessary because cv2 is not able to read mp4 files, weird tho because on inspecting the files they have the same CODECs?
         new_video_full_path = os.path.join(videos_path_input, video_name_no_ext) + extension
-        print("Old name: ", video_f_path_input)
-        print("New name: ", new_video_full_path)
         os.rename(video_f_path_input, new_video_full_path)
 
         frames_f_output = os.path.join(frames_output, video_name_no_ext)
@@ -105,11 +102,9 @@ def flip_movies(videos_path_input, videos_path_output, extension = ".mjpeg"):
         video_zoomed_f_path = os.path.join(videos_path_input, video_zoomed_f_name)
 
         # Flip the movies' frames, and store them in a "Flipped" folder
-        print("\n Flipping frames in video {} ...".format(new_video_full_path))
         flip_frames(video_name_no_ext = video_name_no_ext, 
                     video_f_path_input = new_video_full_path, 
                     frames_f_path_output = frames_f_output)
-        print("Frames successfully flipped and saved. ")
 
         frames_to_video(input_path = frames_f_output, output_path = video_flipped_f_path, output_name = video_name_no_ext, video_ext = video_ext)
 
@@ -123,20 +118,9 @@ def flip_frames(video_name_no_ext, video_f_path_input, frames_f_path_output):
 
         frames_f_path_output: e.g. "st-gcn/data/youtube/videos_clean_augmented/flipped_images/2d1rnOm9IGQ-cup_song"
     '''
-
-    # Works on this video (original .avi):
-    # video_f_path_input = "/home/stian/Master_thesis/data_augmentation/data/videos/Stian.avi"
-
-    # flipped_frames_path = "st-gcn/data/youtube/videos_clean_augmented/flipped_images"
-    print("Video name no extension: ", video_name_no_ext)
-    print("Video full input path: ", video_f_path_input)
-    print("Frames full output path: ", frames_f_path_output)
-
     if not os.path.isfile(video_f_path_input):
         print("This file does not exists {}, please try again \n".format(video_f_path_input))
         return
-    else:
-        print("This file exists, so it should work \n")
 
     if not os.path.isdir(frames_f_path_output):
         print("Making output directory {} \n".format(frames_f_path_output))
@@ -145,8 +129,6 @@ def flip_frames(video_name_no_ext, video_f_path_input, frames_f_path_output):
 
     vid = cv2.VideoCapture(video_f_path_input)
     success, image = vid.read()
-
-
 
     if not success:
         print("------------------ Failed reading video -------------------------\n")
@@ -166,9 +148,6 @@ def flip_frames(video_name_no_ext, video_f_path_input, frames_f_path_output):
 def frames_to_video(input_path, output_path, output_name, video_ext):
     # output_name += "{}.{}".format("_flipped", video_ext) 
     # print("output_full: ", output_path)
-
-    print("\n Input path: ", input_path, "\n")
-    print("\n Full output path: ", output_path, "\n")
     time.sleep(5)
     try:
         cmd = ("ffmpeg -framerate 30 -i " + input_path + "/frame%000d_flipped.jpg -c:v libx264 -profile:v high -crf 20 -pix_fmt yuv420p " + output_path + " -loglevel quiet")
@@ -203,9 +182,18 @@ def zoom_movies(videos_path_input):
         video_zoomed_f_path = os.path.join(videos_path_input, video_zoomed_f_name)
     
         try:
-            cmd = "ffmpeg -i " + video_f_path_input + " -vf 'scale=1.1*iw:-1, crop=iw/1.1:ih/1.1' " + video_zoomed_f_path
+            cmd = ("ffmpeg -i " + video_f_path_input + " -vf 'scale=1.1*iw:-1, crop=iw/1.1:ih/1.1' " + video_zoomed_f_path + ' -loglevel quiet')
             p = subprocess.Popen(cmd, shell=True)
             p.wait()
         except:
             print("Zooming went wrong.")
+
+def clean_video(video_fpath_inp, video_fpath_out, breadth = 340, height = 256, frate = 30):
+    #cmd = ("ffmpeg -i " + video_fpath_inp + " -vf scale=340:256 -r 30 " + video_fpath_out)
+    cmd = ('ffmpeg -i {} -s {}:{} -r {} {} -loglevel quiet'.format(video_fpath_inp, breadth, height, frate, video_fpath_out))
+    p = subprocess.Popen(cmd, shell=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+    p.wait()
+
+
+
             
