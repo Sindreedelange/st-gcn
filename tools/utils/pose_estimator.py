@@ -13,14 +13,13 @@ import psutil
 from .file_util import *
 # from views.output_messages import *
 
-class openpose():
+class pose_estimator():
 
     def __init__ (self,  
                     data_path,
                     data_videos_clean,
                     data_videos_keypoints,
-                    label_text_file = "resource/kinetics_skeleton/label_name_reduced.txt",
-                    openpose_bin_path = "openpose/build/examples/openpose/openpose.bin", 
+                    label_text_file = "resource/kinetics_skeleton/label_name_reduced.txt", 
                     model_folder = "openpose/models/"):        
         '''
             data_path: String - Path to data
@@ -61,7 +60,7 @@ class openpose():
         self.data_json_description_validation = file2dict(self.data_json_description_validation_path)
 
     
-    def openpose(self):
+    def run(self):
         '''
             Runs through all of the (cleaned) downloaded videos from Youtube, check for duplicates (the existence of skeletonfiles with the same name),
             if they are not duplicates, store the skeletonfiles (gotten from Openpose), and rename that such that later work will be simpler.  
@@ -91,13 +90,13 @@ class openpose():
 
                 successfull = False
                 while not successfull:
-                    successfull = self.run_video_through_openpose(input_f_path = video_path_full, output_f_path = output_path_full)
+                    successfull = self.run_video_through_pose_estimator(input_f_path = video_path_full, output_f_path = output_path_full)
 
                 self.rename_keypoints_files(file_f_path = output_path_full)
             else:
                 duplicate_files_error_message(self.data_videos_keypoints, filename_no_extension)
 
-    def run_video_through_openpose(self, input_f_path, output_f_path): 
+    def run_video_through_pose_estimator(self, input_f_path, output_f_path, pose_estimator = 'tf_pose'): 
         '''
             Run the cleaned videos from Youtube through openpose to get their skeletonfiles
 
@@ -106,7 +105,12 @@ class openpose():
 
             Return: Boolean - Whether or not the video was ran through openpose, successfully, or if it froze, such that the program had to be terminated
         '''
-        cmd = (self.openpose_bin_path + " --video " + input_f_path + " --model_folder " + self.model_folder + " --write_json " + output_f_path + " --model_pose COCO --keypoint_scale 3")        
+        if pose_estimator == 'tf_pose':
+            cmd = (self.openpose_bin_path + " --video " + input_f_path + " --model_folder " + self.model_folder + " --write_json " + output_f_path + " --model_pose COCO --keypoint_scale 3")        
+        else: #pose_estimator == 'openpose'
+            openpose_bin_path = "openpose/build/examples/openpose/openpose.bin"
+            cmd = (self.openpose_bin_path + " --video " + input_f_path + " --model_folder " + self.model_folder + " --write_json " + output_f_path + " --model_pose COCO --keypoint_scale 3")        
+
         parent = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         # Wait until process is finished - not relevant anymore because the program needs to keep running in order to stop Openpose, if it freezes
@@ -215,9 +219,9 @@ class openpose():
 
         return ratio < train_val_ratio 
 
-    def openpose_skeleton_to_stgcn(self, train_val_ratio = 0.9, frame_limit = 300):
+    def skeleton_to_stgcn(self, train_val_ratio = 0.9, frame_limit = 300):
         '''
-            "Translate" openpose skeletonfiles to one single skeletonfile which st-gcn accepts as input, for either training or validating
+            "Translate" skeletonfiles to one single skeletonfile which st-gcn accepts as input, for either training or validating
 
             output_path: String - Where to output both the translated skeleton files, and the corresponding label dictionaries
             train_val_ratio: Double - The ratio between training and validation data 

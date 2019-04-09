@@ -1,5 +1,5 @@
 from tools.utils.youtube import youtube as yt_util
-from tools.utils.openpose import openpose as op_util
+from tools.utils.pose_estimator import pose_estimator
 from tools.utils.video import flip_movies
 import argparse
 
@@ -25,7 +25,7 @@ if __name__ == '__main__':
     if augment:
         flip_movies(videos_path_input = videos_cleaned, videos_path_output = videos_augment)
 
-    op = op_util(data_path = data_path, data_videos_clean = videos_cleaned, data_videos_keypoints = videos_keypoints)
-    op.openpose()
-    op.openpose_skeleton_to_stgcn()
+    pose_est = pose_estimator(data_path = data_path, data_videos_clean = videos_cleaned, data_videos_keypoints = videos_keypoints)
+    pose_est.run()
+    pose_est.skeleton_to_stgcn()
 
