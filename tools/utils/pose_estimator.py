@@ -13,15 +13,15 @@ import psutil
 from .file_util import *
 # from views.output_messages import *
 
-class openpose():
+class pose_estimator():
 
     def __init__ (self,  
                     data_path,
                     data_videos_clean,
                     data_videos_keypoints,
-                    label_text_file = "resource/kinetics_skeleton/label_name_reduced.txt",
-                    openpose_bin_path = "openpose/build/examples/openpose/openpose.bin", 
-                    model_folder = "openpose/models/"):        
+                    label_text_file = "resource/kinetics_skeleton/label_name_reduced.txt", 
+                    model_folder = "openpose/models/",
+                    openpose_bin_path = 'openpose/build/examples/openpose/openpose.bin'):        
         '''
             data_path: String - Path to data
 
@@ -60,11 +60,8 @@ class openpose():
         self.data_json_description_train = file2dict(self.data_json_description_train_path)
         self.data_json_description_validation = file2dict(self.data_json_description_validation_path)
 
-        # Set only to one GPU
-        # os.environ['CUDA_VISIBLE_DEVICES'] = '1'
-
     
-    def openpose(self):
+    def run(self):
         '''
             Runs through all of the (cleaned) downloaded videos from Youtube, check for duplicates (the existence of skeletonfiles with the same name),
             if they are not duplicates, store the skeletonfiles (gotten from Openpose), and rename that such that later work will be simpler.  
@@ -79,7 +76,7 @@ class openpose():
             counter += 1
 
             print("\n --------------------------------------------------------------------- \n")
-            print("Currently running {} through tf_pose \t {}/{}".format(file, counter, num_files))
+            print("Currently running {} through OpenPose \t {}/{}".format(file, counter, num_files))
             print("\n --------------------------------------------------------------------- \n")
             # Input video full path
             video_path_full = os.path.join(self.data_videos_clean, file)
@@ -94,19 +91,13 @@ class openpose():
 
                 successfull = False
                 while not successfull:
-                    successfull = self.run_video_through_openpose(input_f_path = video_path_full, output_f_path = output_path_full)
-
-                try:
-                    # Save storage
-                    os.remove(video_path_full)
-                except:
-                    print("Tried removing {}, but did not work - disregarding".format(video_path_full))
+                    successfull = self.run_video_through_pose_estimator(input_f_path = video_path_full, output_f_path = output_path_full)
 
                 self.rename_keypoints_files(file_f_path = output_path_full)
             else:
                 duplicate_files_error_message(self.data_videos_keypoints, filename_no_extension)
 
-    def run_video_through_openpose(self, input_f_path, output_f_path): 
+    def run_video_through_pose_estimator(self, input_f_path, output_f_path, pose_estimator = 'tf_pose'): 
         '''
             Run the cleaned videos from Youtube through openpose to get their skeletonfiles
 
@@ -115,19 +106,20 @@ class openpose():
 
             Return: Boolean - Whether or not the video was ran through openpose, successfully, or if it froze, such that the program had to be terminated
         '''
-        #cmd = (self.openpose_bin_path + " --video " + input_f_path + " --model_folder " + self.model_folder + " --write_json " + output_f_path + " --model_pose COCO --keypoint_scale 3")        
-        
-        cmd = ('python tf-pose-estimation/run_video.py --video ' + input_f_path + ' --output_json ' + output_f_path)
-        
-        parent = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if pose_estimator == 'tf_pose':
+            cmd = ('python tf-pose-estimator/run_video.py' + " --video " + input_f_path + " --model_folder " + self.model_folder + " --write_json " + output_f_path + " --model_pose COCO --keypoint_scale 3")        
+        else: #pose_estimator == 'openpose'
+            openpose_bin_path = "openpose/build/examples/openpose/openpose.bin"
+            cmd = (self.openpose_bin_path + " --video " + input_f_path + " --model_folder " + self.model_folder + " --write_json " + output_f_path + " --model_pose COCO --keypoint_scale 3")        
 
+        parent = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         # Wait until process is finished - not relevant anymore because the program needs to keep running in order to stop Openpose, if it freezes
         # p.wait()
 
         # Problems with openpose freezing after x number of videos, so to combat this: 
             # Stop the process after y seconds, and try again 
-        timeout_limit = 20
+        timeout_limit = 45
         successfull = True
         for _ in range(timeout_limit):
             time.sleep(1)
@@ -228,9 +220,9 @@ class openpose():
 
         return ratio < train_val_ratio 
 
-    def openpose_skeleton_to_stgcn(self, train_or_val, frame_limit = 300):
+    def skeleton_to_stgcn(self, train_val_ratio = 0.9, frame_limit = 300):
         '''
-            "Translate" openpose skeletonfiles to one single skeletonfile which st-gcn accepts as input, for either training or validating
+            "Translate" skeletonfiles to one single skeletonfile which st-gcn accepts as input, for either training or validating
 
             output_path: String - Where to output both the translated skeleton files, and the corresponding label dictionaries
             train_val_ratio: Double - The ratio between training and validation data 
@@ -238,12 +230,16 @@ class openpose():
                 Relevant when the videos are < 10 seconds long
         '''    
         # Make sure that the downloaded files are separated between 'train' and 'val'
-        # test_val_ratio_dict = self.get_num_labels(self.data_videos_keypoints)
+        test_val_ratio_dict = self.get_num_labels(self.data_videos_keypoints)
         counter = 0
         num_folders = len(os.listdir(self.data_videos_keypoints))
+
         for folder in os.listdir(self.data_videos_keypoints):
             counter += 1
             print("Interpreting keypoint files {}/{}".format(counter, num_folders), end='\r')
+            #print("--------------------------------------------------------------------- \n")
+            #print("Currently working on {}".format(folder))
+            # print("--------------------------------------------------------------------- \n")
             
             # Make sure no more than 300 frames pr video 
             frame_counter = 0
@@ -258,7 +254,10 @@ class openpose():
             # Corresponding Label Index from the label text file
             label_index = self.get_label_index(label)
 
-            if train_or_val == 'train':
+            # True if the data should be part of the training set, False if it should be part of the validation set
+            train = self.train_or_val(test_val_ratio_dict, label, train_val_ratio)
+
+            if train:
                 old_dictionary = self.data_json_description_train
                 old_dictionary_path = self.data_json_description_train_path
                 current_train_val_folder = self.data_json_skeleton_train
@@ -266,6 +265,9 @@ class openpose():
                 old_dictionary = self.data_json_description_validation
                 old_dictionary_path = self.data_json_description_validation_path
                 current_train_val_folder = self.data_json_skeleton_validation
+                 
+            # Increase counter
+            test_val_ratio_dict[label]['current'] += 1
 
             filename = folder + ".json"
             dest_path = os.path.join(current_train_val_folder, filename) # Store skeleton files here

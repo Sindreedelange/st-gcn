@@ -74,9 +74,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Kinetics-skeleton Data Converter.')
     parser.add_argument(
-        '--data_path', default='/data-nas/robot/data/Kinetics')
+        '--data_path', default='/data2/robot/data/Kinetics/kinetics-skeleton')
     parser.add_argument(
-        '--out_folder', default='/data-nas/robot/data/Kinetics')
+        '--out_folder', default='/data2/robot/data/Kinetics/kinetics-skeleton')
     arg = parser.parse_args()
 
     part = ['train', 'val']

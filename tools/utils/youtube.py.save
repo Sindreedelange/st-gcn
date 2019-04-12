@@ -46,7 +46,6 @@ class youtube():
         reset_directory(self.data_videos_download)
         reset_directory(self.data_videos_clean)
         reset_directory(self.data_videos_augmentation_path_output)
-        print("Data video keypoints: {}".format(self.data_videos_keypoints))
         reset_directory(self.data_videos_keypoints)
 
 
@@ -129,8 +128,10 @@ class youtube():
         print("Extension: {}".format(url))
         '''
         # '-f' determines the format of the video (= mp4), '-o' determines the output folder (and the files' name)
-        cmd = ("youtube-dl " + url + " -f mp4 -o " + video_download_f_path)
-        p = subprocess.Popen(cmd, shell=True)
+        cmd = ("youtube-dl -c -f mp4 " + url + " -o " + video_download_f_path)
+ath)
+>>>>>>> aeb626d5cd96aa9c635997729e1cfb9523ce46a9
+        p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         # Wait until process is finished
         p.wait()

@@ -21,7 +21,7 @@ logger.addHandler(ch)
 
 fps_time = 0
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 if __name__ == '__main__':
     start = time.time()

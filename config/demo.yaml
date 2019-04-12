@@ -3,7 +3,7 @@ weights: ./work_dir/epoch20_model.pt
 model: net.st_gcn.Model
 model_args:
   in_channels: 3
-  num_class: 7
+  num_class: 400
   edge_importance_weighting: true
   graph_args:
     layout: openpose
