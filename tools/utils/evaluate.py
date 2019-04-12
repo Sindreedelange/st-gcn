@@ -17,14 +17,16 @@ class Evaluate():
                     inference_summary_name = 'inference_sum.csv', 
                     confusion_matrix_name = 'conf_matrix.png', 
                     score_sum_name = 'score_summary.csv' , 
-                    summary_folder = "summary"):
+                    summary_folder = "summary",
+                    test = False):
         self.inference_summary_name = inference_summary_name
         self.work_dir_summary = os.path.join(work_dir, summary_folder)
         self.confusion_matrix_name = confusion_matrix_name
         self.score_sum_name = score_sum_name
 
         # Remove and initialize files
-        self.init_folders()
+        if not test:
+            self.init_folders()
 
         # Read the label list file, to minimize io processes 
         self.label_list = self.init_label_list()

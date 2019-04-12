@@ -21,7 +21,6 @@ logger.addHandler(ch)
 
 fps_time = 0
 
-
 if __name__ == '__main__':
     start = time.time()
     parser = argparse.ArgumentParser(description='tf-pose-estimation Video')

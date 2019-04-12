@@ -49,7 +49,8 @@ class Processor(IO):
         self.lr = self.arg.base_lr
 
     def load_evaluator(self):
-        self.evaluate = Evaluate(work_dir = self.arg.work_dir)
+        test = self.arg.phase == 'test' 
+        self.evaluate = Evaluate(work_dir = self.arg.work_dir, test = test)
 
     def load_optimizer(self):
         self.optimizer = self.arg.optimizer
@@ -189,7 +190,7 @@ class Processor(IO):
             self.io.print_log("Training done - model saved at {}".format(os.path.join(self.arg.work_dir.split("/")[1], filename)))
         # test phase
         elif self.arg.phase == 'test':
-
+            epoch = 'test'
             # the path of weights must be appointed
             if self.arg.weights is None:
                 raise ValueError('Please appoint --weights.')
@@ -198,7 +199,18 @@ class Processor(IO):
 
             # evaluation
             self.io.print_log('Evaluation Start:')
-            self.test()
+            val_accuracy, val_loss, inference_rows = self.test(epoch = epoch, evaluator = self.evaluate)
+
+            # Calculating mean loss over the eval interval
+            eval_interval_mean_loss = np.mean(self.train_result_loss)
+            # Clearing the list for calculating the mean over the next interval
+            self.train_result_loss.clear()
+
+            self.store_eval_results(epoch = epoch, 
+                                    train_loss = eval_interval_mean_loss, 
+                                    val_loss = val_loss, 
+                                    val_accuracy = val_accuracy,
+                                    inference_rows = inference_rows)
             self.io.print_log('Done.\n')
 
             # save the output of model

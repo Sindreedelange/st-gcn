@@ -13,7 +13,7 @@ import psutil
 from .file_util import *
 # from views.output_messages import *
 
-class pose_estimator():
+class pose_estimator_test():
 
     def __init__ (self,  
                     data_path,
@@ -45,21 +45,16 @@ class pose_estimator():
         self.openpose_bin_path = os.path.join(".", openpose_bin_path)
         self.model_folder = model_folder
 
-        self.data_json_skeleton_train = "{}/kinetics_train_reduced".format(self.data_kinetics_skeleton)
-        self.data_json_skeleton_validation = "{}/kinetics_val_reduced".format(self.data_kinetics_skeleton)
-        self.data_json_description_train_path = "{}/kinetics_label_reduced_train.json".format(self.data_kinetics_skeleton)
-        self.data_json_description_validation_path = "{}/kinetics_label_reduced_val.json".format(self.data_kinetics_skeleton)
+        self.data_json_skeleton_test = "{}/kinetics_test_reduced".format(self.data_kinetics_skeleton)
+        self.data_json_description_test_path = "{}/kinetics_label_reduced_test.json".format(self.data_kinetics_skeleton)
 
         # Verify that all of the default folders exists, if not, make them
         verify_directory(self.data_videos_keypoints)
         verify_directory(self.data_videos_clean)
-        verify_directory(self.data_json_skeleton_train)
-        verify_directory(self.data_json_skeleton_validation)
+        verify_directory(self.data_json_skeleton_test)
 
         # Load the .json 'description files
-        self.data_json_description_train = file2dict(self.data_json_description_train_path)
-        self.data_json_description_validation = file2dict(self.data_json_description_validation_path)
-
+        self.data_json_description_test = file2dict(self.data_json_description_test_path)
     
     def run(self):
         '''
@@ -97,7 +92,7 @@ class pose_estimator():
             else:
                 duplicate_files_error_message(self.data_videos_keypoints, filename_no_extension)
 
-    def run_video_through_pose_estimator(self, input_f_path, output_f_path, pose_estimator = 'tf_pose'): 
+    def run_video_through_pose_estimator(self, input_f_path, output_f_path, pose_estimator = 'openpose'): 
         '''
             Run the cleaned videos from Youtube through openpose to get their skeletonfiles
 
@@ -166,71 +161,14 @@ class pose_estimator():
 
             counter += 1
 
-
-    @staticmethod
-    def get_num_labels(dir_path):
-        '''
-            Input path to directory which contains folders, each corresponding to a youtube video.
-            Finding each video's label in their name, and counting them
-
-            dir_path: String - path to directory containing the folder corresponding to a youtube video
-
-            Return: Dictionary
-                        label: label name
-                            total: total occurences of that specific label
-                            counter: used to compare with total to get the ratio
-        '''
-        file_list = os.listdir(dir_path)
-
-        label_dict = {}
-        for file in file_list:
-            # Example: 7oqsc6ahHVI--cup_song__0__flipped --> Get 'cup_song'
-            label = file.split("---")[1].split("__")[0]
-
-            if label in label_dict:
-                label_dict[label]['total'] += 1
-            else:
-                # New label, so initialize it with 'starting values' 
-                label_dict[label] = {'total': 1, 'current': 0}
-        
-        return label_dict
-
-    @staticmethod
-    def train_or_val(label_counter_dict, label, train_val_ratio):
-        '''
-            Based on the inputed dictionary, return whether the data should be stored in train or validation data set
-
-            label_counter_dict: Dictionary 
-                label:
-                    total: 
-                    counter:
-            label: String - name of the current label
-            train_val_ratio: Double - the ratio to which compare the counter/total number to, which ultimately decides if train or validation
-
-            Return: Boolean
-                True: Training set
-                False: Validation set
-
-        '''
-        # Divide the data between train and validation data set
-        current = label_counter_dict[label]['current']
-        total = label_counter_dict[label]['total']
-
-        ratio = current/total
-
-        return ratio < train_val_ratio 
-
-    def skeleton_to_stgcn(self, train_val_ratio = 0.9, frame_limit = 300):
+    def skeleton_to_stgcn(self, frame_limit = 299):
         '''
             "Translate" skeletonfiles to one single skeletonfile which st-gcn accepts as input, for either training or validating
 
             output_path: String - Where to output both the translated skeleton files, and the corresponding label dictionaries
-            train_val_ratio: Double - The ratio between training and validation data 
             frame_limit: Int - The limit on number of frames pr. video (the paper used 300, so we will be using the same)
                 Relevant when the videos are < 10 seconds long
         '''    
-        # Make sure that the downloaded files are separated between 'train' and 'val'
-        test_val_ratio_dict = self.get_num_labels(self.data_videos_keypoints)
         counter = 0
         num_folders = len(os.listdir(self.data_videos_keypoints))
 
@@ -250,27 +188,17 @@ class pose_estimator():
             stgcn_data = {}
 
             # Get label name from folder name
-            label = folder.split("---")[1].split("__")[0]
+            label = folder.split("__")[0]
             # Corresponding Label Index from the label text file
             label_index = self.get_label_index(label)
 
-            # True if the data should be part of the training set, False if it should be part of the validation set
-            train = self.train_or_val(test_val_ratio_dict, label, train_val_ratio)
 
-            if train:
-                old_dictionary = self.data_json_description_train
-                old_dictionary_path = self.data_json_description_train_path
-                current_train_val_folder = self.data_json_skeleton_train
-            else:
-                old_dictionary = self.data_json_description_validation
-                old_dictionary_path = self.data_json_description_validation_path
-                current_train_val_folder = self.data_json_skeleton_validation
-                 
-            # Increase counter
-            test_val_ratio_dict[label]['current'] += 1
+            old_dictionary = self.data_json_description_test
+            old_dictionary_path = self.data_json_description_test_path
+            current_folder = self.data_json_skeleton_test
 
             filename = folder + ".json"
-            dest_path = os.path.join(current_train_val_folder, filename) # Store skeleton files here
+            dest_path = os.path.join(current_folder, filename) # Store skeleton files here
         
             file_list_sorted = natsorted(os.listdir(folder_name))
             for file in file_list_sorted:
@@ -313,9 +241,6 @@ class pose_estimator():
             stgcn_data['data'] = stgcn_data_array
             stgcn_data['label'] = label 
             stgcn_data['label_index'] = label_index 
-
-            # Make sure that the label text file is updated
-            update_label_list(label)
         
             #dict2file(dest_path, stgcn_data)
             # Store the skeleton file

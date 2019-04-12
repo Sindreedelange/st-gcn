@@ -168,7 +168,7 @@ def convert_from_mp4_to_avi(input_path, output_path):
     new_path = video_no_ext + ".avi"
     return new_path
 
-def zoom_movies(videos_path_input):
+def zoom_movies(videos_path_input, videos_path_output):
     
     for video_name in os.listdir(videos_path_input):
         print("Zooming on {}".format(video_name), end='\r')
@@ -177,7 +177,7 @@ def zoom_movies(videos_path_input):
     
         video_zoomed_name = "{}__{}".format(video_name_no_ext, "zoomed")
         video_zoomed_f_name = "{}.{}".format(video_zoomed_name, "mp4")
-        video_zoomed_f_path = os.path.join(videos_path_input, video_zoomed_f_name)
+        video_zoomed_f_path = os.path.join(videos_path_output, video_zoomed_f_name)
     
         try:
             cmd = ("ffmpeg -i " + video_f_path_input + " -vf 'scale=1.1*iw:-1, crop=iw/1.1:ih/1.1' " + video_zoomed_f_path + ' -loglevel quiet')

@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 import subprocess
 
 from tools.utils.file_util import verify_directory
-from tools.utils.openpose import openpose
+from tools.utils.pose_estimator import pose_estimator
 from tools.utils import video as video_util
 
 from tools.utils import file_util
