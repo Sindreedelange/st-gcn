@@ -35,7 +35,7 @@ def skeleton_to_stgcn(input_path, output_path, phase, frame_limit = 299):
         Relevant when the videos are < 10 seconds long
     
     '''
-
+    unable_to_load_json_files_list = []
     folder_skeleton = os.path.join(output_path, 'kinetics_{}'.format(phase))
     if not os.path.isdir(folder_skeleton):
         os.makedirs(folder_skeleton)
@@ -47,7 +47,7 @@ def skeleton_to_stgcn(input_path, output_path, phase, frame_limit = 299):
     num_folders = len(input_files)
     for folder in input_files:
         counter += 1
-        print("Interpreting keypoint files {}/{}".format(counter, num_folders), end='\r')
+        print("Interpreting keypoint files {}/{}".format(counter, num_folders))
         #print("--------------------------------------------------------------------- \n")
         #print("Currently working on {}".format(folder))
         # print("--------------------------------------------------------------------- \n")
@@ -82,7 +82,12 @@ def skeleton_to_stgcn(input_path, output_path, phase, frame_limit = 299):
             frame_data = {'frame_index': frame_id}
         
             # Load the .json files, one by one
-            data = json.load(open(filename_full_path))
+            try:
+                data = json.load(open(filename_full_path))
+            except Exception:
+                unable_to_load_json_files_list.append(filename_full_path)
+                continue
+
             skeletons = []
             for person in data['people']:
                 score, coordinates = [], []
@@ -116,14 +121,21 @@ def skeleton_to_stgcn(input_path, output_path, phase, frame_limit = 299):
     
         #dict2file(dest_path, stgcn_data)
         # Store the skeleton file
-        with open(output_folder_fpath, 'w') as outfile:
-            json.dump(stgcn_data, outfile, indent=4)
+        try: 
+            with open(output_folder_fpath, 'w') as outfile:
+                json.dump(stgcn_data, outfile, indent=4)
+        except Exception:
+            print("Unable to open json file, or dump {} - moving on".format(outfile))
 
         # dict2file(label_dest_path_filename, old_dictionary)
         # Store the .json dictionary: 'kinetics_label_reduced_val/train.json'
         with open(old_dictionary_path, 'w') as label_file:
             json.dump(old_dictionary, label_file, indent=4)
-    
+    mode = 'a' if os.path.exists('unable_to_load_json_files.txt') else 'w'
+    with open('unable_to_load_json_files.txt', mode) as f:
+        for lines in unable_to_load_json_files_list:
+            f.write(lines)
+    f.close() 
 def pad_video_dict(list_to_pad, frame_limit):
     '''
        Pad videos that are < frame_limit frames, so that to fully utilize the model by optimizing usage of the dataset
@@ -131,7 +143,11 @@ def pad_video_dict(list_to_pad, frame_limit):
        list_to_pad: List containing keypoint information for each frame in the video 
     '''
     # Get the number of frames in the list
-    num_frames = list_to_pad[-1]['frame_index']
+    try:
+        num_frames = list_to_pad[-1]['frame_index']
+    except Exception:
+        print("The current file seemingly does not have any coordiantes")
+        return
     # Find the ratio between number of frames and 300
     ratio = frame_limit - num_frames
     # Get the x first frames in dictionary, where x = ratio, and add them to the end
@@ -154,15 +170,15 @@ def run_pose_estimation(input_path, output_path):
         input_fpath = os.path.join(input_path, file)
         filename = file.split('.')[0]
         output_fpath = os.path.join(output_path, filename)
-        if check_duplicates(output_path, file):
-            print('\n Duplicate file: {}'.format(file))
+        if check_duplicates(output_path, filename):
+            print('\n Duplicate file: {}'.format(filename))
             continue
 
         pose_estimation_successfull = False
 
         while not pose_estimation_successfull:
             pose_estimation_successfull = pose_estimation(input_fpath = input_fpath, output_fpath = output_fpath)
-
+        print("Successfully pose estimated file: {}".format(output_fpath))
         rename_keypoints_file(input_fpath = output_fpath)
     
 def pose_estimation(input_fpath, output_fpath):
@@ -219,13 +235,13 @@ if __name__ == '__main__':
 
     phase = args.phase
 
-    data_path = '/data2/robot/data'
+    data_path = 'data'
     youtube_path = os.path.join(data_path, 'youtube')
     kinetics_path = os.path.join(data_path, 'Kinetics/kinetics-skeleton/')
 
     videos_clean_path = os.path.join(youtube_path, 'videos_clean_{}'.format(phase))
     videos_keypoints_path = os.path.join(youtube_path, 'videos_clean_keypoints_{}'.format(phase))
 
-    run_pose_estimation(input_path = videos_clean_path, output_path = videos_keypoints_path)
+    #run_pose_estimation(input_path = videos_clean_path, output_path = videos_keypoints_path)
     skeleton_to_stgcn(input_path = videos_keypoints_path, output_path = kinetics_path, phase = phase)
 

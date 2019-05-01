@@ -39,7 +39,7 @@ def skeleton_to_stgcn(input_path, output_path, phase, frame_limit = 299):
     folder_skeleton = os.path.join(output_path, 'kinetics_{}'.format(phase))
     if not os.path.isdir(folder_skeleton):
         os.makedirs(folder_skeleton)
-    json_skeleton_fpath = os.path.join(output_path, 'kinetics_{}.json'.format(phase))
+    json_skeleton_fpath = os.path.join(output_path, 'kinetics_{}_1.json'.format(phase))
     json_skeleton_dictionary = file2dict(json_skeleton_fpath)
 
     counter = 0
@@ -47,7 +47,7 @@ def skeleton_to_stgcn(input_path, output_path, phase, frame_limit = 299):
     num_folders = len(input_files)
     for folder in input_files:
         counter += 1
-        print("Interpreting keypoint files {}/{}".format(counter, num_folders), end='\r')
+        print("Interpreting keypoint files {}/{}".format(counter, num_folders))
         #print("--------------------------------------------------------------------- \n")
         #print("Currently working on {}".format(folder))
         # print("--------------------------------------------------------------------- \n")
@@ -131,7 +131,11 @@ def pad_video_dict(list_to_pad, frame_limit):
        list_to_pad: List containing keypoint information for each frame in the video 
     '''
     # Get the number of frames in the list
-    num_frames = list_to_pad[-1]['frame_index']
+    try:
+        num_frames = list_to_pad[-1]['frame_index']
+    except Exception:
+        print("The current file seemingly does not have any coordinates")
+        return
     # Find the ratio between number of frames and 300
     ratio = frame_limit - num_frames
     # Get the x first frames in dictionary, where x = ratio, and add them to the end
@@ -154,21 +158,22 @@ def run_pose_estimation(input_path, output_path):
         input_fpath = os.path.join(input_path, file)
         filename = file.split('.')[0]
         output_fpath = os.path.join(output_path, filename)
-        if check_duplicates(output_path, file):
-            print('\n Duplicate file: {}'.format(file))
+        if check_duplicates(output_path, filename):
+            print('\n Duplicate file: {}'.format(filename))
             continue
 
         pose_estimation_successfull = False
 
         while not pose_estimation_successfull:
             pose_estimation_successfull = pose_estimation(input_fpath = input_fpath, output_fpath = output_fpath)
+        print("Successfully pose estimated file: {}".format(output_fpath))
 
         rename_keypoints_file(input_fpath = output_fpath)
     
 def pose_estimation(input_fpath, output_fpath):
     cmd = ('python tf-pose-estimation/run_video_1.py --video ' + input_fpath + ' --output_json ' + output_fpath)
     
-    parent = subprocess.Popen(cmd, shell=True)
+    parent = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     timeout_limit = 45
     successfull = True
@@ -219,13 +224,13 @@ if __name__ == '__main__':
 
     phase = args.phase
 
-    data_path = '/data2/robot/data'
+    data_path = 'data'
     youtube_path = os.path.join(data_path, 'youtube')
     kinetics_path = os.path.join(data_path, 'Kinetics/kinetics-skeleton/')
 
     videos_clean_path = os.path.join(youtube_path, 'videos_clean_{}_1'.format(phase))
     videos_keypoints_path = os.path.join(youtube_path, 'videos_clean_keypoints_{}_1'.format(phase))
 
-    run_pose_estimation(input_path = videos_clean_path, output_path = videos_keypoints_path)
+    #run_pose_estimation(input_path = videos_clean_path, output_path = videos_keypoints_path)
     skeleton_to_stgcn(input_path = videos_keypoints_path, output_path = kinetics_path, phase = phase)
 
