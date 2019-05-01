@@ -6,7 +6,7 @@ import os
 import pandas as pd
 
 import sys
-sys.path.append("/home/robot/robot/st-gcn/tools")
+sys.path.append("/data-ssd/robot/st-gcn/tools")
 from views.output_messages import duplicate_files_error_message
 
 import shutil

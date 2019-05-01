@@ -55,7 +55,9 @@ class REC_Processor(Processor):
         # Torchlight.io.IO
         self.model = self.io.load_model(self.arg.model,
                                         **(self.arg.model_args))
-        # self.model.apply(self.weights_init)
+        print("-------\nModel Loaded\n-------")
+        self.model.apply(self.weights_init)
+        print("--------\nWeights applied\n----")
         self.loss = nn.CrossEntropyLoss()
         
     def load_optimizer(self):
@@ -217,5 +219,5 @@ class REC_Processor(Processor):
         parser.add_argument('--nesterov', type=str2bool, default=True, help='use nesterov or not')
         parser.add_argument('--weight_decay', type=float, default=0.0001, help='weight decay for optimizer')
         # endregion yapf: enable
-
+        print("----------------\nReturning parser\n--------------------")
         return parser
